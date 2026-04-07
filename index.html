@@ -132,6 +132,40 @@
   button.ai-btn { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
   button.ai-btn:hover { background: linear-gradient(135deg, #7c3aed, #4f46e5); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4); }
   
+  /* === THEME DRIVEN DESIGNS (data-theme) === */
+  
+  /* 1. Modern (Default) */
+  .slide-container[data-theme="modern"] .s-title { border-left: calc(var(--cw) * 1.5) solid var(--c-primary); padding-left: calc(var(--cw) * 2.5); }
+  
+  /* 2. Light (Dots & Underline) */
+  .slide-container[data-theme="light"] { background-image: radial-gradient(rgba(0,0,0,0.06) 2px, transparent 0); background-size: calc(var(--cw)*4) calc(var(--cw)*4); }
+  .slide-container[data-theme="light"] .s-title { border-bottom: calc(var(--cw)*0.4) solid var(--c-primary); padding-bottom: calc(var(--cw)*1.5); display: inline-block; }
+  
+  /* 3. Dark (Neon glow) */
+  .slide-container[data-theme="dark"] .s-title { text-shadow: 0 0 15px var(--c-primary), 0 0 30px var(--c-primary); }
+  .slide-container[data-theme="dark"] .s-content li::marker { color: var(--c-primary); text-shadow: 0 0 10px var(--c-primary); }
+  
+  /* 4. Medical / Academic (Top header bar) */
+  .slide-container[data-theme="medical"] .slide:not(.is-section) { padding-top: calc(var(--cw) * 16); }
+  .slide-container[data-theme="medical"] .slide:not(.is-section) .s-title { position: absolute; top: 0; left: 0; right: 0; background: var(--c-primary); color: #fff; padding: calc(var(--cw) * 3) calc(var(--cw) * 8); font-size: calc(var(--cw) * 4); text-align: center; margin: 0; }
+  .slide-container[data-theme="medical"] .s-content li { list-style-type: square; }
+  .slide-container[data-theme="medical"] .slide:not(.is-section) .s-content { margin-top: calc(var(--cw) * 2); }
+  
+  /* 5. Manga / Comic (Heavy borders, dots) */
+  .slide-container[data-theme="manga"] { background-image: radial-gradient(#aaa 2px, transparent 2px); background-size: calc(var(--cw)*1.5) calc(var(--cw)*1.5); }
+  .slide-container[data-theme="manga"] .slide:not(.is-section) { background: #fff; inset: calc(var(--cw)*3); padding: calc(var(--cw)*5); border: calc(var(--cw)*0.8) solid #000; box-shadow: calc(var(--cw)*1.5) calc(var(--cw)*1.5) 0 #000; }
+  .slide-container[data-theme="manga"] .slide.is-section { border: calc(var(--cw)*1.2) solid #000; background: var(--c-primary); }
+  .slide-container[data-theme="manga"] .s-title { display: inline-block; padding: calc(var(--cw)*2) calc(var(--cw)*4); border: calc(var(--cw)*0.6) solid #000; border-radius: 50% 50% 50% 50% / 20% 20% 20% 20%; background: #fff; transform: rotate(-1deg); box-shadow: calc(var(--cw)*1) calc(var(--cw)*1) 0 var(--c-primary); z-index: 2; position: relative; }
+  .slide-container[data-theme="manga"] .slide.is-section .s-title { color: #000; background: #fff; transform: rotate(-3deg); }
+  
+  /* 6. Elegant (Double borders) */
+  .slide-container[data-theme="elegant"] .slide:not(.is-section) { inset: calc(var(--cw)*2); padding: calc(var(--cw)*6); border: calc(var(--cw)*0.2) solid var(--c-primary); outline: calc(var(--cw)*0.5) double var(--c-primary); outline-offset: calc(var(--cw)*-1.5); }
+  .slide-container[data-theme="elegant"] .s-title { text-align: center; border-bottom: 1px solid var(--c-primary); padding-bottom: calc(var(--cw)*2); letter-spacing: 0.1em; }
+  .slide-container[data-theme="elegant"] .slide.is-section { border: calc(var(--cw)*0.2) solid #fff; outline: calc(var(--cw)*0.5) double #fff; outline-offset: calc(var(--cw)*-2.5); inset: calc(var(--cw)*1.5); }
+  
+  /* 7. Custom */
+  .slide-container[data-theme="custom"] .s-title { border-bottom: calc(var(--cw)*0.5) solid var(--c-primary); }
+
   /* Fullscreen overrides (Applies ONLY to preview-panel now) */
   :fullscreen { background: #000; }
   :fullscreen .speaker-note-bottom { display: none!important; }
@@ -296,6 +330,7 @@ function applyThemeTokens(bg, p, t, sb, f, border, radius, shadow) {
 function applyBuiltinTheme(themeId) {
   const t = DESIGN_THEMES[themeId] || DESIGN_THEMES.modern;
   applyThemeTokens(t.bgApp, t.p, t.t, t.sb, t.f, t.border, t.radius, t.shadow);
+  document.getElementById('slide-container').dataset.theme = themeId;
 }
 
 function applyCustomPalette() {
@@ -304,6 +339,7 @@ function applyCustomPalette() {
   const pri = document.getElementById('val-pri').value;
   applyThemeTokens(bg, pri, txt, bg, null, '1px solid #ccc', '4px', '0 10px 20px rgba(0,0,0,0.1)');
   document.getElementById('theme-select').value = "";
+  document.getElementById('slide-container').dataset.theme = 'custom';
 }
 
 // ==========================================
