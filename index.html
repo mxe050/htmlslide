@@ -69,7 +69,7 @@
   .speaker-note-textarea:focus { outline: none; }
 
   /* 2. Hover Zone */
-  .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: flex-end; pointer-events: none; }
+  .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--cw) * 8); z-index: 40; display: flex; align-items: flex-end; pointer-events: auto; }
   .hover-note-content { 
     width: 100%; background: rgba(0,0,0,0.85); color: #fff; padding: calc(var(--cw) * 2) calc(var(--cw) * 6);
     font-size: calc(var(--cw) * 2.2); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(10px);
@@ -77,8 +77,7 @@
     display: none; pointer-events: none;
   }
   .hover-note-content.active { display: block; }
-  /* スライド全体にホバーした時点で表示するよう変更（透明なイベントブロッカーの影響を排除） */
-  .slide:hover .hover-note-content { opacity: 1; transform: translateY(0); }
+  .hover-note-zone:hover .hover-note-content { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
   /* Slide Core Styles */
   .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; font-family: var(--font-main); color: var(--c-text); box-sizing: border-box; }
@@ -91,7 +90,7 @@
   .slide.is-section .s-title { color: #fff; font-size: calc(var(--cw) * 6.5); margin: 0; text-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
   /* Interactive Navigation Overlays (Z-index high enough to not be blocked) */
-  .nav-left, .nav-right { position: absolute; top: 0; bottom: 0; width: 40%; z-index: 30; cursor: pointer; transition: background 0.3s; }
+  .nav-left, .nav-right { position: absolute; top: 0; bottom: calc(var(--cw) * 8); width: 40%; z-index: 30; cursor: pointer; transition: background 0.3s; }
   .nav-left { left: 0; }
   .nav-right { right: 0; }
   .nav-left:hover { background: linear-gradient(to right, rgba(0,0,0,0.03), transparent); }
@@ -273,7 +272,7 @@ const DESIGN_THEMES = {
   modern:  { bgApp: '#f1f5f9', p: '#0ea5e9', t: '#334155', sb: '#ffffff', f: "'Inter', 'Noto Sans JP', sans-serif", border: 'none', radius: '8px', shadow: '0 20px 40px rgba(0,0,0,0.15)' },
   light:   { bgApp: '#ffffff', p: '#10b981', t: '#1e293b', sb: '#ffffff', f: "'Inter', 'Noto Sans JP', sans-serif", border: '1px solid #e2e8f0', radius: '4px', shadow: '0 4px 6px rgba(0,0,0,0.05)' },
   dark:    { bgApp: '#020617', p: '#38bdf8', t: '#f8fafc', sb: '#0f172a', f: "'Inter', 'Noto Sans JP', sans-serif", border: '1px solid #1e293b', radius: '12px', shadow: '0 20px 50px rgba(0,0,0,0.5)' },
-  medical: { bgApp: '#eef2f5', p: '#003366', t: '#1a1a1a', sb: '#ffffff', f: "'Noto Serif JP', serif", border: '1px solid #cbd5e1', radius: '0px', shadow: '0 5px 15px rgba(0,0,0,0.08)' },
+  medical: { bgApp: '#eef2f5', p: '#003366', t: '#1a1a1a', sb: '#ffffff', f: "'Meiryo', 'メイリオ', sans-serif", border: '1px solid #cbd5e1', radius: '0px', shadow: '0 5px 15px rgba(0,0,0,0.08)' },
   manga:   { bgApp: '#fcd34d', p: '#000000', t: '#000000', sb: '#ffffff', f: "'Yusei Magic', 'Comic Sans MS', sans-serif", border: '5px solid #000', radius: '0px', shadow: '10px 10px 0px rgba(0,0,0,1)' },
   elegant: { bgApp: '#292524', p: '#d4af37', t: '#fafaf9', sb: '#1c1917', f: "'Noto Serif JP', serif", border: '1px solid #78716c', radius: '2px', shadow: '0 20px 40px rgba(0,0,0,0.4)' }
 };
