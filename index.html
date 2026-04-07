@@ -2,178 +2,227 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>SlideGen Pro - AI Assistant</title>
+<title>SlideGen Pro - Professional Edition</title>
+<!-- 各種デザイン用のGoogle Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&family=Yusei+Magic&display=swap" rel="stylesheet">
+<!-- ライブラリ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   /* =========================================
-     CSS Variables (Design Core)
+     Theme Variables (Dynamic injection)
      ========================================= */
   :root {
-    --bg-app: #f4f6f8;
-    --c-primary: #0f766e;
+    --bg-app: #f1f5f9;
+    --c-primary: #0ea5e9;
     --c-text: #334155;
     --slide-bg: #ffffff;
+    --font-main: 'Inter', 'Noto Sans JP', sans-serif;
+    --slide-border: none;
+    --slide-radius: 8px;
+    --shadow-slide: 0 20px 40px rgba(0,0,0,0.15);
   }
   
   /* =========================================
-     Base Layout
+     Base Resets & Layout
      ========================================= */
-  body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-app); color: var(--c-text); overflow: hidden; transition: background 0.3s; }
-  .header { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ccc; z-index: 100; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-  .main-area { display: flex; flex: 1; overflow: hidden; }
+  body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: 'Inter', 'Noto Sans JP', sans-serif; background: var(--bg-app); color: #334155; overflow: hidden; transition: background 0.4s ease; }
+  
+  /* Glassmorphism Header */
+  .header { display: flex; justify-content: space-between; padding: 10px 24px; background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.08); z-index: 100; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  
+  /* Main Workspace */
+  .main-area { display: flex; flex: 1; overflow: hidden; position: relative; }
 
-  /* Input Mode */
-  .input-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; }
-  .input-panel textarea { flex: 1; resize: none; margin-bottom: 20px; font-family: monospace; padding: 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; line-height: 1.6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  /* Input Panel (Editor) */
+  .input-panel { flex: 1; display: flex; flex-direction: column; padding: 30px; max-width: 1000px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+  .input-panel textarea { flex: 1; resize: none; margin-bottom: 0; font-family: monospace; padding: 20px; font-size: 16px; border: 1px solid #cbd5e1; border-radius: 12px; line-height: 1.7; box-shadow: inset 0 2px 4px rgba(0,0,0,0.04); transition: border-color 0.2s; }
+  .input-panel textarea:focus { outline: none; border-color: var(--c-primary); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2); }
   
   /* =========================================
-     Preview Mode & Relative Resizing
+     Preview Panel (Slide & Bottom Note)
      ========================================= */
-  .preview-panel { flex: 1; display: none; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; overflow: hidden; }
-  .slide-container-wrapper { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 30px; box-sizing: border-box; }
+  .preview-panel { flex: 1; display: none; flex-direction: column; background: #0f172a; position: relative; overflow: hidden; }
   
-  /* Slide Boundary */
+  /* Slide Viewport */
+  .slide-container-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px 40px; box-sizing: border-box; overflow: hidden; }
+  
   .slide-container {
     aspect-ratio: 16 / 9;
     background: var(--slide-bg);
     position: relative;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    box-shadow: var(--shadow-slide);
     overflow: hidden;
-    border-radius: 8px;
-    width: 100%;
+    border-radius: var(--slide-radius);
+    border: var(--slide-border);
+    max-width: 100%;
     max-height: 100%;
-    transition: background 0.3s;
+    transition: background 0.4s ease;
   }
   
-  /* Slide Contents */
-  .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; opacity: 0; transition: opacity 0.3s; }
-  .slide.active { display: flex; opacity: 1; }
-  .s-title { font-size: calc(var(--cw) * 5); font-weight: bold; margin-bottom: calc(var(--cw) * 4); color: var(--c-primary); line-height: 1.3; }
-  .s-content { font-size: calc(var(--cw) * 2.8); line-height: 1.8; color: var(--c-text); list-style-position: outside; margin-left: calc(var(--cw) * 3); padding: 0; }
-  .s-content li { margin-bottom: calc(var(--cw) * 1.5); }
-  
-  /* Section Title Page */
-  .slide.is-section { align-items: center; text-align: center; background: var(--c-primary); }
-  .slide.is-section .s-title { color: #fff; font-size: calc(var(--cw) * 7); margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-
-  /* Navigation Click Zones */
-  .nav-left, .nav-right { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: pointer; }
-  .nav-left { left: 0; }
-  .nav-right { right: 0; }
-
-  /* Hover Note Indicator */
-  .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--cw) * 8); z-index: 20; display: flex; align-items: flex-end; }
-  .hover-note-content { 
-    width: 100%; background: rgba(0,0,0,0.85); color: #fff; padding: calc(var(--cw) * 2) calc(var(--cw) * 6);
-    font-size: calc(var(--cw) * 1.8); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(10px);
-    line-height: 1.6; box-sizing: border-box; pointer-events: none; border-top-left-radius: 8px; border-top-right-radius: 8px;
+  /* Speaker Note at the Bottom */
+  .speaker-note-bottom {
+    height: 25%; min-height: 150px; background: #1e293b; border-top: 1px solid #334155;
+    display: flex; flex-direction: column; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 50;
   }
-  .hover-note-zone:hover .hover-note-content { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .speaker-note-header { padding: 8px 16px; background: #0f172a; color: #94a3b8; font-size: 13px; font-weight: bold; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+  .speaker-note-textarea {
+    flex: 1; background: transparent; border: none; color: #f8fafc; padding: 15px 20px; font-size: 16px;
+    line-height: 1.7; resize: none; font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  }
+  .speaker-note-textarea:focus { outline: none; }
 
   /* =========================================
-     Sidebars & Modals
+     Slide Core Styles (Relative Scaling)
      ========================================= */
-  .note-sidebar { width: 350px; background: #fff; border-left: 1px solid #ddd; display: none; flex-direction: column; z-index: 50; }
-  .note-sidebar.active { display: flex; }
-  .note-sidebar textarea { flex: 1; border: none; padding: 20px; font-size: 15px; background: #fafafa; margin: 0; resize: none; pointer-events: none; line-height: 1.6; color: #444; }
+  .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; opacity: 0; transition: opacity 0.5s ease; font-family: var(--font-main); color: var(--c-text); }
+  .slide.active { display: flex; opacity: 1; }
+  .s-title { font-size: calc(var(--cw) * 5); font-weight: bold; margin-bottom: calc(var(--cw) * 4); color: var(--c-primary); line-height: 1.35; letter-spacing: 0.02em; }
+  .s-content { font-size: calc(var(--cw) * 2.8); line-height: 1.8; list-style-position: outside; margin-left: calc(var(--cw) * 3); padding: 0; }
+  .s-content li { margin-bottom: calc(var(--cw) * 1.5); }
   
-  .agenda-sidebar { position: fixed; top: 0; right: -350px; width: 350px; height: 100%; background: #fff; box-shadow: -2px 0 15px rgba(0,0,0,0.2); z-index: 200; transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; }
-  .agenda-sidebar.open { right: 0; }
-  .agenda-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 18px; }
+  /* Section Design */
+  .slide.is-section { align-items: center; text-align: center; background: var(--c-primary); justify-content: center; }
+  .slide.is-section .s-title { color: #fff; font-size: calc(var(--cw) * 6.5); margin: 0; text-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+  /* Interactive Navigation Overlays */
+  .nav-left, .nav-right { position: absolute; top: 0; bottom: 0; width: 40%; z-index: 10; cursor: pointer; transition: background 0.3s; }
+  .nav-left { left: 0; }
+  .nav-right { right: 0; }
+  .nav-left:hover { background: linear-gradient(to right, rgba(0,0,0,0.03), transparent); }
+  .nav-right:hover { background: linear-gradient(to left, rgba(0,0,0,0.03), transparent); }
+
+  /* =========================================
+     Hover Agenda Sidebar
+     ========================================= */
+  #agenda-trigger-zone { position: fixed; right: 0; top: 0; bottom: 0; width: 30px; z-index: 190; }
+  .agenda-sidebar {
+    position: fixed; top: 0; right: -320px; width: 320px; height: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+    box-shadow: -5px 0 25px rgba(0,0,0,0.1); z-index: 200; transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; flex-direction: column; border-left: 1px solid rgba(0,0,0,0.05);
+  }
+  #agenda-trigger-zone:hover + .agenda-sidebar, .agenda-sidebar:hover { right: 0; }
+  
+  .agenda-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; font-size: 16px; font-weight: bold; color: var(--c-primary); }
   .agenda-list { overflow-y: auto; padding: 15px; list-style: none; margin: 0; flex: 1; }
-  .agenda-list li { padding: 12px 15px; cursor: pointer; border-radius: 6px; font-size: 15px; margin-bottom: 5px; transition: background 0.2s; }
-  .agenda-list li:hover { background: #f1f5f9; }
-  .agenda-list li.current { background: var(--c-primary); color: #fff; font-weight: bold; }
-  .agenda-list li.sec-item { font-weight: bold; margin-top: 15px; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0; border-radius: 0; cursor: default; background: none!important; color: var(--c-primary)!important; }
+  .agenda-list li { padding: 12px 15px; cursor: pointer; border-radius: 8px; font-size: 14px; margin-bottom: 6px; transition: all 0.2s; color: #475569; }
+  .agenda-list li:hover { background: #f1f5f9; transform: translateX(4px); }
+  .agenda-list li.current { background: var(--c-primary); color: #fff; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  .agenda-list li.sec-item { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold; margin-top: 15px; padding-bottom: 4px; border-bottom: 1px solid #cbd5e1; border-radius: 0; cursor: default; background: none!important; color: #94a3b8!important; }
 
-  /* AI Assistant Modal */
-  .ai-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 300; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+  /* =========================================
+     AI Assistant Modal
+     ========================================= */
+  .ai-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.7); backdrop-filter: blur(6px); z-index: 300; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
   .ai-modal.show { display: flex; opacity: 1; }
-  .ai-box { background: #fff; border-radius: 12px; width: 90%; max-width: 600px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px); transition: transform 0.3s; }
-  .ai-modal.show .ai-box { transform: translateY(0); }
-  .ai-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-  .ai-card h4 { margin: 0 0 5px 0; color: #0f172a; font-size: 16px; }
-  .ai-card p { margin: 0 0 15px 0; font-size: 13px; color: #64748b; }
-  .ai-input-group { display: flex; gap: 10px; }
-  .ai-input-group input, .ai-input-group select { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+  .ai-box { background: #fff; border-radius: 16px; width: 90%; max-width: 650px; padding: 35px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); transform: translateY(20px) scale(0.98); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto;}
+  .ai-modal.show .ai-box { transform: translateY(0) scale(1); }
+  .ai-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; margin-bottom: 20px; transition: border-color 0.3s; }
+  .ai-card:hover { border-color: #cbd5e1; }
+  .ai-card h4 { margin: 0 0 8px 0; color: #0f172a; font-size: 17px; display: flex; align-items: center; gap: 8px;}
+  .ai-card p { margin: 0 0 16px 0; font-size: 14px; color: #64748b; line-height: 1.5; }
+  .ai-input-group { display: flex; gap: 12px; flex-wrap: wrap; }
+  .ai-input-group input, .ai-input-group select { flex: 1; min-width: 200px; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: all 0.2s; }
+  .ai-input-group input:focus, .ai-input-group select:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
 
-  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150; display: none; backdrop-filter: blur(2px); }
-  .overlay.show { display: block; }
-
-  /* Buttons */
-  button { cursor: pointer; padding: 8px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-weight: bold; transition: 0.2s; color: #333; }
-  button:hover { background: #f8f9fa; }
-  button.primary { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
-  button.primary:hover { filter: brightness(1.1); }
-  button.ai-btn { background: #6366f1; color: white; border: none; }
-  button.ai-btn:hover { background: #4f46e5; }
+  /* =========================================
+     Buttons & UI Elements
+     ========================================= */
+  button { cursor: pointer; padding: 10px 18px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s ease; color: #334155; display: inline-flex; align-items: center; gap: 6px; }
+  button:hover { background: #f8fafc; transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  button:active { transform: translateY(0); }
+  button.primary { background: linear-gradient(135deg, var(--c-primary), #3b82f6); color: #fff; border: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+  button.primary:hover { filter: brightness(1.1); box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4); }
+  button.ai-btn { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+  button.ai-btn:hover { background: linear-gradient(135deg, #7c3aed, #4f46e5); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4); }
   
-  /* Loading Overlay for PDF */
-  #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); color: white; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
-  .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+  /* Loading Overlay */
+  #loading-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.9); color: white; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; letter-spacing: 0.05em; backdrop-filter: blur(4px); }
+  .spinner { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite; margin-bottom: 25px; }
   @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  /* =========================================
+     Fullscreen Adjustments
+     ========================================= */
+  :fullscreen .preview-panel { display: flex!important; background: #000; }
+  :fullscreen .speaker-note-bottom { display: none!important; }
+  :fullscreen .slide-container-wrapper { padding: 0; }
+  :fullscreen .slide-container { border-radius: 0; border: none; }
+  ::backdrop { background: #000; }
 </style>
-<!-- Libraries for perfect PDF export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <div id="loading-text">PDFを生成しています... </div>
+  <div id="loading-text">PDFを生成しています...</div>
 </div>
 
 <!-- Header Toolbar -->
-<div class="header">
-  <div style="display:flex; align-items:center; gap: 15px;">
-    <div style="font-weight:900; font-size: 1.4rem; color: var(--c-primary);">SlideGen Pro</div>
-    <button class="ai-btn" onclick="openAIModal()" style="padding: 6px 12px; font-size: 13px;">🤖 AI デザイン / 原稿 アシスト</button>
+<div class="header" id="app-header">
+  <div style="display:flex; align-items:center; gap: 20px;">
+    <div style="font-weight:900; font-size: 1.5rem; letter-spacing: -0.03em; color: var(--c-primary);">SlideGen<span style="font-weight:400;color:#94a3b8;">Pro</span></div>
+    <button class="ai-btn" onclick="openAIModal()">✨ AI アシスト</button>
   </div>
   
-  <div id="tb-input" style="display: flex; gap: 10px;">
-    <button class="primary" onclick="generate()" style="padding: 8px 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">🚀 スライド生成</button>
+  <div id="tb-input" style="display: flex; gap: 12px;">
+    <button class="primary" onclick="generate()" style="padding: 10px 28px; font-size: 15px;">🚀 スライド生成</button>
   </div>
   
-  <div id="tb-preview" style="display:none; gap: 8px; align-items:center;">
-    <button onclick="toInput()">✏️ 原稿を修正</button>
-    <div style="width: 1px; height: 24px; background: #ccc; margin: 0 5px;"></div>
-    <button onclick="toggleNoteMode()">📝 サイドバー原稿枠 ON/OFF</button>
-    <div style="width: 1px; height: 24px; background: #ccc; margin: 0 5px;"></div>
+  <div id="tb-preview" style="display:none; gap: 10px; align-items:center;">
+    <button onclick="toInput()">✏️ 編集に戻る</button>
+    <div style="width: 1px; height: 24px; background: #e2e8f0; margin: 0 5px;"></div>
     <button onclick="downloadPDF()">📄 完全版PDF保存</button>
-    <button class="primary" onclick="toggleAgenda()">≡ アジェンダ</button>
+    <button onclick="toggleFullScreen()">🖥️ 全画面表示</button>
   </div>
 </div>
 
 <!-- Main Workspace -->
 <div class="main-area">
-  <!-- Input Mode -->
+  
+  <!-- Editor Panel -->
   <div class="input-panel" id="input-panel">
+    <div style="margin-bottom: 15px; font-weight: 600; color: #475569; display: flex; justify-content: space-between; align-items: flex-end;">
+      <span>Markdown風 スライド原稿</span>
+      <span style="font-size:12px; font-weight: normal; color: #94a3b8;">AIアシストボタンから自動生成も可能です</span>
+    </div>
     <textarea id="source-text" placeholder="ここに原稿を入力してください。
-上の「🤖 AI デザイン / 原稿 アシスト」ボタンから、テーマに沿った台本を丸ごと自動生成することもできます。"></textarea>
+「スライド: タイトル」で新しいスライドになります。
+「---セクション: タイトル---」で扉ページが挿入されます。
+「台本: 」と書くとそれ以降の内容が台本領域に格納されます。
+箇条書き記号がない文章も自動的にスライド項目として読み込まれます。"></textarea>
   </div>
 
-  <!-- Preview Mode -->
+  <!-- Presentation Panel -->
   <div class="preview-panel" id="preview-panel">
+    
+    <!-- Slide Area -->
     <div class="slide-container-wrapper" id="slide-wrapper">
       <div class="slide-container" id="slide-container">
-        <!-- 実行時にここにスライドHTMLが注入される -->
+        <!-- Slides are injected here -->
       </div>
     </div>
+    
+    <!-- Speaker Note Area (Bottom Fixed) -->
+    <div class="speaker-note-bottom" id="speaker-note-bottom">
+      <div class="speaker-note-header">
+        <span>🗣 発表者ノート（台本）</span>
+        <span id="slide-counter-note" style="color:#64748b;">Slide 0 / 0</span>
+      </div>
+      <textarea class="speaker-note-textarea" id="bottom-note-content" readonly placeholder="このスライドには台本がありません。"></textarea>
+    </div>
+
   </div>
 
-  <!-- Note Sidebar -->
-  <div class="note-sidebar" id="note-sidebar">
-    <div style="padding: 15px 20px; border-bottom: 1px solid #ddd; background: var(--slide-bg); font-weight: bold; font-size: 14px; color: var(--c-primary);">🗣 発表者用ノート（台本）</div>
-    <textarea id="sidebar-note-content" readonly placeholder="このスライドには台本がありません。"></textarea>
-  </div>
 </div>
 
-<!-- Sliding Agenda Overlay -->
-<div class="overlay" id="overlay" onclick="toggleAgenda()"></div>
+<!-- Hover Agenda Trigger & Sidebar -->
+<div id="agenda-trigger-zone"></div>
 <div class="agenda-sidebar" id="agenda-sidebar">
   <div class="agenda-header">
-    <span style="font-weight:bold; color: var(--c-primary);">📋 アジェンダ</span>
-    <button onclick="toggleAgenda()" style="padding: 4px 10px; border: none; background: #eee;">✕</button>
+    📑 アジェンダ
   </div>
   <ul class="agenda-list" id="agenda-list"></ul>
 </div>
@@ -181,150 +230,184 @@
 <!-- AI Assist Modal -->
 <div class="ai-modal" id="ai-modal" onclick="if(event.target===this) closeAIModal()">
   <div class="ai-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-      <h3 style="margin:0; color:#1e293b;">🤖 AI アシストパネル</h3>
-      <button onclick="closeAIModal()" style="border:none; background:transparent; font-size:20px;">✕</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+      <h3 style="margin:0; color:#0f172a; font-size: 22px;">✨ AI アシストパネル</h3>
+      <button onclick="closeAIModal()" style="border:none; background:transparent; font-size:24px; padding:0; color:#94a3b8; cursor:pointer;">&times;</button>
     </div>
 
-    <!-- デザイン生成部 -->
+    <!-- Design Section -->
     <div class="ai-card">
-      <h4>🎨 1. デザインを切り替える・生成する</h4>
-      <p>テンプレートから選ぶか、イメージを伝えてオリジナルデザインを生成します。</p>
+      <h4>🎨 1. テーマ＆デザイン変更</h4>
+      <p>医学の学術大会風や漫画風など、プロが作成したテーマを選ぶか、フリーワードで独自の配色をAIに生成させます。</p>
       
-      <div class="ai-input-group" style="margin-bottom: 10px;">
+      <div class="ai-input-group" style="margin-bottom: 12px;">
         <select id="theme-select" onchange="applyBuiltinTheme(this.value)">
-          <option value="light">ライト（白背景・標準）</option>
-          <option value="modern">モダン（ダークグレー背景）</option>
-          <option value="dark">ナイト（完全ブラック背景）</option>
-          <option value="corporate">コーポレート（白背景・青基調）</option>
-          <option value="warm">ウォーム（暖色系・柔らかい）</option>
-          <option value="elegant">エレガント（高級感・セピア）</option>
+          <option value="modern" selected>モダンフラット（標準）</option>
+          <option value="light">クリーンホワイト</option>
+          <option value="dark">ナイトモード（黒背景）</option>
+          <option value="medical">🩺 学術・医学大会風（明朝体・堅牢）</option>
+          <option value="manga">🗯️ コミック・漫画風（手書き風・太枠）</option>
+          <option value="elegant">✨ エレガント（セピア・高級感）</option>
         </select>
       </div>
       <div class="ai-input-group">
-        <input type="text" id="custom-theme-input" placeholder="例：ダークでクールな青ベース、ポップな明るい黄色">
-        <button onclick="generateCustomTheme()" class="ai-btn">✨ 色を生成</button>
+        <input type="text" id="custom-theme-input" placeholder="例：サイバーパンク風、ピンクで可愛い感じ">
+        <button onclick="generateCustomTheme()" class="ai-btn">🪄 生成</button>
       </div>
     </div>
 
-    <!-- 原稿生成部 -->
+    <!-- Draft Gen Section -->
     <div class="ai-card">
-      <h4>✍️ 2. 原稿（ドラフト）を自動生成する</h4>
-      <p>テーマを入力すると、システムがプレゼンの骨格と台本を自動展開します。（※既存の原稿は上書きされます）</p>
+      <h4>✍️ 2. 詳細な原稿（ドラフト）の一発自動生成</h4>
+      <p>プレゼンの目的やトピックを入力すると、10枚前後の詳細なスライド構成案と台本を自動作成します。</p>
       <div class="ai-input-group">
-        <input type="text" id="auto-draft-input" placeholder="例：DX推進の必要性とメリット、新入社員向けビジネスマナー">
-        <button onclick="generateAutoDraft()" class="ai-btn" style="background:#0ea5e9;">✒️ 原稿を作成</button>
+        <input type="text" id="auto-draft-input" placeholder="例：新AIツールの導入促進について、新入社員のビジネスマナー講座">
+        <button onclick="generateAutoDraft()" class="ai-btn" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">⚡️ ドラフト作成</button>
       </div>
     </div>
 
-    <button onclick="closeAIModal()" style="width:100%; padding:12px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px;">閉じる</button>
+    <div style="text-align: right; margin-top: 20px;">
+      <button onclick="closeAIModal()" style="padding: 10px 30px; background: #e2e8f0;">完了</button>
+    </div>
   </div>
 </div>
 
 <script>
 // ==========================================
-// 1. デザイン・AIアシスト関連機能
+// 1. デザインテーマ・アシスト機能
 // ==========================================
 const DESIGN_THEMES = {
-  light:     { bgApp: '#e2e8f0', colorPrimary: '#0f766e', colorText: '#334155', slideBg: '#ffffff' },
-  modern:    { bgApp: '#0f172a', colorPrimary: '#3b82f6', colorText: '#cbd5e1', slideBg: '#1e293b' },
-  dark:      { bgApp: '#000000', colorPrimary: '#fbbf24', colorText: '#d1d5db', slideBg: '#111827' },
-  corporate: { bgApp: '#f8fafc', colorPrimary: '#1d4ed8', colorText: '#1e293b', slideBg: '#ffffff' },
-  warm:      { bgApp: '#fffdd0', colorPrimary: '#d97706', colorText: '#451a03', slideBg: '#fffbeb' },
-  elegant:   { bgApp: '#292524', colorPrimary: '#d4af37', colorText: '#f5f5f4', slideBg: '#1c1917' }
+  modern:  { bgApp: '#f1f5f9', p: '#0ea5e9', t: '#334155', sb: '#ffffff', f: "'Inter', 'Noto Sans JP', sans-serif", border: 'none', radius: '8px', shadow: '0 20px 40px rgba(0,0,0,0.15)' },
+  light:   { bgApp: '#ffffff', p: '#10b981', t: '#1e293b', sb: '#ffffff', f: "'Inter', 'Noto Sans JP', sans-serif", border: '1px solid #e2e8f0', radius: '4px', shadow: '0 4px 6px rgba(0,0,0,0.05)' },
+  dark:    { bgApp: '#020617', p: '#38bdf8', t: '#f8fafc', sb: '#0f172a', f: "'Inter', 'Noto Sans JP', sans-serif", border: '1px solid #1e293b', radius: '12px', shadow: '0 20px 50px rgba(0,0,0,0.5)' },
+  medical: { bgApp: '#eef2f5', p: '#003366', t: '#1a1a1a', sb: '#ffffff', f: "'Noto Serif JP', serif", border: '1px solid #cbd5e1', radius: '0px', shadow: '0 5px 15px rgba(0,0,0,0.08)' },
+  manga:   { bgApp: '#fcd34d', p: '#000000', t: '#000000', sb: '#ffffff', f: "'Yusei Magic', 'Comic Sans MS', sans-serif", border: '5px solid #000', radius: '0px', shadow: '10px 10px 0px rgba(0,0,0,1)' },
+  elegant: { bgApp: '#292524', p: '#d4af37', t: '#fafaf9', sb: '#1c1917', f: "'Noto Serif JP', serif", border: '1px solid #78716c', radius: '2px', shadow: '0 20px 40px rgba(0,0,0,0.4)' }
 };
 
 function applyBuiltinTheme(themeId) {
-  const t = DESIGN_THEMES[themeId] || DESIGN_THEMES.light;
-  applyThemeTokens(t.bgApp, t.colorPrimary, t.colorText, t.slideBg);
+  const t = DESIGN_THEMES[themeId] || DESIGN_THEMES.modern;
+  applyThemeTokens(t.bgApp, t.p, t.t, t.sb, t.f, t.border, t.radius, t.shadow);
 }
 
-function applyThemeTokens(bgApp, primary, text, slideBg) {
+function applyThemeTokens(bg, p, t, sb, f, border, radius, shadow) {
   const root = document.documentElement.style;
-  root.setProperty('--bg-app', bgApp);
-  root.setProperty('--c-primary', primary);
-  root.setProperty('--c-text', text);
-  root.setProperty('--slide-bg', slideBg);
+  root.setProperty('--bg-app', bg);
+  root.setProperty('--c-primary', p);
+  root.setProperty('--c-text', t);
+  root.setProperty('--slide-bg', sb);
+  root.setProperty('--font-main', f);
+  root.setProperty('--slide-border', border);
+  root.setProperty('--slide-radius', radius);
+  root.setProperty('--shadow-slide', shadow);
 }
 
-// 簡易ヒューリスティックによるカスタムテーマ生成
+// ヒューリスティック・AI疑似カラー生成
 function generateCustomTheme() {
   const input = document.getElementById('custom-theme-input').value;
-  if(!input.trim()) { alert('どんなデザインにしたいかテキストを入力してください。'); return; }
+  if(!input.trim()) { alert('プロンプトを入力してください。'); return; }
   
-  let bg = '#ffffff', pri = '#3b82f6', txt = '#1e293b', sbg = '#f8fafc';
-  
-  // ダーク系判定
-  if(input.match(/ダーク|黒|暗|夜/)) { bg = '#0f172a'; sbg = '#1e293b'; txt = '#f8fafc'; pri= '#60a5fa'; }
-  else if(input.match(/ポップ|明|黄|かわいい/)) { bg = '#fefce8'; sbg = '#fef08a'; txt = '#422006'; pri = '#eab308'; }
+  // Base Defaults (Light)
+  let bg = '#f8fafc', p = '#6366f1', t = '#0f172a', sb = '#ffffff', f = "'Inter', sans-serif", border = 'none', rad = '8px', sd = '0 10px 30px rgba(0,0,0,0.1)';
 
-  // カラー判定
-  if(input.match(/赤|情熱/)) pri = '#ef4444';
-  else if(input.match(/緑|自然|エコ/)) pri = '#10b981';
-  else if(input.match(/オレンジ|元気/)) pri = '#f97316';
-  else if(input.match(/紫|クール/)) pri = '#8b5cf6';
-  else if(input.match(/ピンク/)) pri = '#ec4899';
-  else if(input.match(/青|ブルー/)) pri = '#3b82f6';
-  
-  applyThemeTokens(bg, pri, txt, sbg);
-  document.getElementById('theme-select').value = ""; // reset pulldown
-  alert(`「${input}」のイメージからデザインを生成・適用しました！`);
+  // Keywords parsing
+  if(input.match(/サイバー|ネオン|未来/)) { bg = '#09090b'; sb = '#18181b'; t = '#f4f4f5'; p = '#22d3ee'; border = '1px solid #22d3ee'; sd = '0 0 20px rgba(34,211,238,0.4)'; rad = '0px'; }
+  else if(input.match(/和風|日本/)) { bg = '#e7e5e4'; sb = '#f5f5f4'; t = '#292524'; p = '#991b1b'; f = "'Noto Serif JP', serif"; rad = '0px'; }
+  else if(input.match(/ポップ|可愛い|かわいい/)) { bg = '#fef08a'; sb = '#ffffff'; t = '#6b21a8'; p = '#ec4899'; border = '3px solid #ec4899'; rad = '20px'; }
+  else if(input.match(/ダーク|黒/)) { bg = '#000000'; sb = '#111827'; t = '#f3f4f6'; p = '#818cf8'; }
+
+  if(input.match(/赤/)) p = '#ef4444';
+  if(input.match(/青/)) p = '#3b82f6';
+  if(input.match(/緑/)) p = '#10b981';
+  if(input.match(/黄/)) p = '#eab308';
+  if(input.match(/紫/)) p = '#a855f7';
+
+  applyThemeTokens(bg, p, t, sb, f, border, rad, sd);
+  document.getElementById('theme-select').value = "";
+  alert(`「${input}」のイメージからデザインを自動生成しました！`);
 }
 
-// AIアシストによる疑似原稿生成ジェネレーター
+// ドラフトの自動生成プロンプト処理
 function generateAutoDraft() {
-  const topic = document.getElementById('auto-draft-input').value.trim() || "新しいプロジェクト提案";
+  const topic = document.getElementById('auto-draft-input').value.trim() || "ビジネスの現状と課題解決に向けた提案";
   
-  const draft = `Slide 1: タイトル
-メインタイトル: ${topic}について
-サブタイトル: 基礎的な理解と今後の具体的なアプローチ
-発表者: [氏名を入力]
-台本: 本日は「${topic}」について、皆様にご説明させていただきます。
+  // 汎用性の高い10枚程度の詳細構成テンプレートを用意
+  const draft = `Slide 1: ${topic}
+サブタイトル: 基本概念から実践的なアクションプランまで
+発表者: [あなたの名前/所属]
+日付: 2026年 [月] [日]
+台本: 本日は「${topic}」について、皆様に全体像から具体的なアクションまでをご説明いたします。お手元の資料とともにご覧ください。
 
---- セクション: 背景と課題 ---
+---セクション: はじめに・背景---
 
-Slide 2: なぜ今、「${topic}」なのか？
-・ 取り巻く環境の急速な変化と市場の動向
-・ 我々の既存プロセスにおける限界と課題
-・ 競合他社はすでに動き始めている事実
-台本: まず、なぜ今このテーマが重要視されているのか、その背景を整理してみたいと思います。
+Slide 2: なぜ今、このテーマが重要なのか？
+・ 取り巻く環境の急速な変化（技術革新・市場動向）
+・ 従来の手法やプロセスが抱える限界の顕在化
+・ 競合他社の動向と、我々が置かれている現在のポジション
+台本: まず背景として、なぜ今我々がこれに取り組む必要があるのか。市場の変化と既存手法の限界という2つの側面から見ていきます。
 
-Slide 3: 放置した場合に想定されるリスク
-・ 生産性の低下や機会損失の発生
-・ 新たな環境への適応の遅れ
-・ 最終的なコストの増大と競争力低下
-台本: もしこの課題を後回しにしてしまった場合、長期的には大きなリスクが我々に降りかかります。
+Slide 3: 現状の課題（Pain Points）
+・ コストとリソースの非効率的な消費
+・ コミュニケーション不足による情報伝達の遅れ
+・ 新しい環境変化への適応スピードの欠如
+台本: 具体的な課題として、特に現場レベルでボトルネックとなっているのが情報の遅れとコストの増大です。
 
---- セクション: 具体的なアプローチ ---
+Slide 4: 放置した場合のリスク
+・ 中長期的な競争力の喪失とシェア低下
+・ 優秀な人材の流出、モチベーションの低下
+・ 顧客満足度やサービス品質における深刻な悪影響
+台本: もしこれらの課題に目をつぶった場合、1年後・3年後にどのような重大なリスクに見舞われるか、この3点に集約されます。
 
-Slide 4: 成功させるための3つのポイント
-ポイント1. 【目標設定】最終的なゴールとKPIの明確化
-ポイント2. 【段階的推進】スモールスタートによるリスク低減
-ポイント3. 【効果測定】実行後の継続的なレビューと改善
-台本: それでは、これらを成功に導くための「3つの重要なポイント」を解説します。
+---セクション: 解決策とアプローチ---
 
-Slide 5: 次のステップ・今後のアクションプラン
-1. 現状の細かい課題の洗い出しと可視化（今週中）
-2. プロジェクト推進チームの組成提案（来週）
-3. 特定部門でのパイロットテスト（PoC）の実行（来月）
-台本: 本日の提案を踏まえ、今後我々がどのようにアクションを起こしていくべきか、具体的なステップです。`;
+Slide 5: 本質的な解決に向けた3つの柱
+1. 【仕組み化】属人的な業務フローの標準化と共有
+2. 【テクノロジー活用】ツールの導入による自動化の推進
+3. 【マインドセット育成】組織全体の意識改革とトレーニング
+台本: ではどう解決するか。我々は「仕組み」「テクノロジー」「マインドセット」という3つの柱を軸にアプローチします。
+
+Slide 6: 新たなアプローチの具体例
+・ 例1：定例業務のプロセス見直しと自動化ツールの導入
+・ 例2：部署間横断プロジェクトチームの発足と定期ミーティング
+・ 例3：全社統一の指標（KPI）の再設定とダッシュボード化
+台本: いくつかの具体的なアクション案をリストアップしました。特にツール導入については既にトライアルを進めています。
+
+Slide 7: 期待される導入効果（メリット）
+・ メリット1：業務時間の約30%削減（予測値）
+・ メリット2：ヒューマンエラーの劇的な減少
+・ メリット3：空いたリソースをより創造的な業務へ再配置
+台本: これが実現すれば、数字としてのコストカットだけでなく、従業員がより価値のある仕事に集中できる環境が整います。
+
+---セクション: 今後の計画と実行---
+
+Slide 8: 実行ロードマップ（フェーズ分け）
+・ フェーズ1（1〜2ヶ月）: 現状調査とテスト環境での評価
+・ フェーズ2（3〜4ヶ月）: 一部部門でのパイロット運用開始
+・ フェーズ3（半年以降）: 課題のフィードバックと全社展開
+台本: 導入にあたっては焦らず、フェーズを分けて段階的に行います。まずは今月からフェーズ1の調査を開始します。
+
+Slide 9: 本日のまとめ
+・ 直面している課題は「適応スピードの欠如」
+・ 解決の鍵は「仕組み・テクノロジー・マインド」の三位一体
+・ 小さな成功（スモールスタート）から着実に全社へ広げる
+台本: 最後に本日のまとめです。ポイントはこの3点になります。全体でビジョンを共有し、一歩ずつ進めていきましょう。
+
+Slide 10: Q & A（質疑応答）
+・ ご不明な点や、現場での懸念点があればお伺いします。
+・ （後日配布のアンケートも併せてご協力ください）
+台本: 私からの説明は以上となります。ご清聴ありがとうございました。それでは質疑応答に移ります。`;
 
   document.getElementById('source-text').value = draft;
   closeAIModal();
-  toInput(); // 入力画面に戻す
-  
-  alert(`「${topic}」の構成と台本を含むスライド原稿を自動作成しました！\nテキストを自由に微調整してから「🚀 スライド生成」を押してください。`);
+  toInput();
+  alert(`「${topic}」に関する詳細な原稿（10枚構成）を自動生成しました！\nテキストを自由に編集してから「スライド生成」を実行してください。`);
 }
 
 function openAIModal() { document.getElementById('ai-modal').classList.add('show'); }
 function closeAIModal() { document.getElementById('ai-modal').classList.remove('show'); }
 
-// 初期化
-applyBuiltinTheme('light');
-
-
 // ==========================================
-// 2. 堅牢なパーサー（原稿解析エンジン）
+// 2. Parser Engine
 // ==========================================
 function parseText(text) {
   const lines = text.split('\n');
@@ -337,7 +420,6 @@ function parseText(text) {
     line = line.trim();
     if (!line) continue;
 
-    // A: 扉ページ（セクション）
     const secMatch = line.match(/^---\s*(?:セクション)?\s*[:：\-]?\s*(.+?)\s*---$/);
     if (secMatch) {
       pushSlide();
@@ -345,7 +427,6 @@ function parseText(text) {
       continue;
     }
 
-    // B: スライドタイトル
     const slideMatch = line.match(/^[-・*\s]*(?:スライド|Slide|ページ|Page)\s*\d*\s*[:：\- ]\s*(.+)/i) || line.match(/^#+\s+(.+)/);
     if (slideMatch) {
       pushSlide();
@@ -353,7 +434,6 @@ function parseText(text) {
       continue;
     }
 
-    // C: 台本開始の目印
     const noteMatch = line.match(/^(?:台本|ノート|note|メモ)\s*[:：]\s*(.*)/i);
     if (noteMatch && currentSlide) {
       currentSlide.notes = noteMatch[1].trim();
@@ -361,13 +441,11 @@ function parseText(text) {
       continue;
     }
 
-    // （フォールバック）タイトル指定なしで文章が始まったら
     if (!currentSlide) {
       currentSlide = { isSection: false, title: line, bullets: [], notes: '', inNotes: false };
       continue;
     }
 
-    // D: 箇条書き / 台本追記
     if (currentSlide.inNotes) {
       currentSlide.notes += (currentSlide.notes ? '\n' : '') + line;
     } else {
@@ -380,18 +458,17 @@ function parseText(text) {
 }
 
 // ==========================================
-// 3. スライド・UI 制御
+// 3. Presentation Logic
 // ==========================================
 let currentSlides = [];
 let currentIndex = 0;
-let noteMode = 'hover';
 
 function generate() {
   const text = document.getElementById('source-text').value;
   if (!text.trim()) { alert('原稿を入力してください。'); return; }
   
   currentSlides = parseText(text);
-  if (currentSlides.length === 0) { alert('読み取れるスライドがありませんでした。'); return; }
+  if (currentSlides.length === 0) return;
 
   currentIndex = 0;
   renderSlidesDOM();
@@ -404,9 +481,8 @@ function generate() {
 
   const container = document.getElementById('slide-container');
   const ro = new ResizeObserver(entries => {
-    if(entries[0]) {
-      const w = entries[0].contentRect.width;
-      container.style.setProperty('--cw', (w / 100) + 'px');
+    if(entries[0] && entries[0].contentRect.width > 0) {
+      container.style.setProperty('--cw', (entries[0].contentRect.width / 100) + 'px');
     }
   });
   ro.observe(container);
@@ -417,30 +493,19 @@ function generate() {
 function renderSlidesDOM() {
   const container = document.getElementById('slide-container');
   container.innerHTML = '';
-
   currentSlides.forEach((slide, idx) => {
     const div = document.createElement('div');
     div.className = 'slide' + (slide.isSection ? ' is-section' : '');
     div.id = 'slide-' + idx;
     
     let html = `<div class="s-title">${escapeHTML(slide.title)}</div>`;
-    
     if (!slide.isSection && slide.bullets.length > 0) {
       html += `<ul class="s-content">`;
       slide.bullets.forEach(b => { html += `<li>${escapeHTML(b)}</li>`; });
       html += `</ul>`;
     }
-
     html += `<div class="nav-left" onclick="goPrev()"></div>`;
     html += `<div class="nav-right" onclick="goNext()"></div>`;
-
-    if (slide.notes) {
-      html += `
-        <div class="hover-note-zone" id="hover-note-${idx}">
-          <div class="hover-note-content">${escapeHTML(slide.notes).replace(/\n/g, '<br>')}</div>
-        </div>
-      `;
-    }
     div.innerHTML = html;
     container.appendChild(div);
   });
@@ -451,28 +516,20 @@ function updateView() {
   slides.forEach((el, idx) => {
     if (idx === currentIndex) el.classList.add('active');
     else el.classList.remove('active');
-    
-    const hoverZone = document.getElementById('hover-note-' + idx);
-    if(hoverZone) hoverZone.style.display = (noteMode === 'hover') ? 'flex' : 'none';
   });
 
-  if (noteMode === 'sidebar') {
-    document.getElementById('sidebar-note-content').value = currentSlides[currentIndex].notes || '';
-  }
+  // Presentation Note update (Bottom Area)
+  document.getElementById('bottom-note-content').value = currentSlides[currentIndex].notes || '';
+  document.getElementById('slide-counter-note').innerText = `Slide ${currentIndex + 1} / ${currentSlides.length}`;
 
-  document.querySelectorAll('.agenda-list li').forEach((li) => {
+  // Agenda highlight update
+  document.querySelectorAll('.agenda-list li').forEach(li => {
     li.classList.toggle('current', li.dataset.index == currentIndex);
   });
 }
 
 function goPrev() { if (currentIndex > 0) { currentIndex--; updateView(); } }
 function goNext() { if (currentIndex < currentSlides.length - 1) { currentIndex++; updateView(); } }
-
-
-// ==========================================
-// 4. アジェンダ処理
-// ==========================================
-let agendaVisible = false;
 
 function buildAgenda() {
   const ul = document.getElementById('agenda-list');
@@ -482,103 +539,73 @@ function buildAgenda() {
     li.dataset.index = idx;
     if (slide.isSection) {
       li.className = 'sec-item';
-      li.textContent = `— ${slide.title} —`;
+      li.textContent = slide.title;
     } else {
       li.textContent = `${idx + 1}. ${slide.title}`;
     }
-    li.onclick = () => { currentIndex = idx; updateView(); toggleAgenda(); };
+    li.onclick = () => { currentIndex = idx; updateView(); };
     ul.appendChild(li);
   });
 }
 
-function toggleAgenda() {
-  agendaVisible = !agendaVisible;
-  document.getElementById('agenda-sidebar').classList.toggle('open', agendaVisible);
-  document.getElementById('overlay').classList.toggle('show', agendaVisible);
+// ==========================================
+// 4. API / Utilities
+// ==========================================
+
+// Fullscreen API (ESC returns automatically handled by browser)
+function toggleFullScreen() {
+  const elem = document.documentElement;
+  if (!document.fullscreenElement) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
 }
 
-
-// ==========================================
-// 5. ズレない完全PDF & PNG 処理 (html2canvas + jspdf)
-// ==========================================
+// PDF Export (Flawless 16:9 pixel rendering)
 async function downloadPDF() {
   const { jsPDF } = window.jspdf;
-  if (!jsPDF || typeof html2canvas === 'undefined') {
-    alert('PDF生成ライブラリを読み込み中です。少々お待ちください。');
-    return;
-  }
-  
+  if (!jsPDF || typeof html2canvas === 'undefined') { alert('PDF処理待ちです。'); return; }
   const slides = document.querySelectorAll('.slide');
   if (slides.length === 0) return;
 
-  // ローディング画面表示
   const loader = document.getElementById('loading-overlay');
   const txt = document.getElementById('loading-text');
   loader.style.display = 'flex';
   
-  // 16:9比率をピクセル単位で定義 (フルHD解像度として生成)
-  const W = 1920; 
-  const H = 1080;
-  
-  // ランドスケープ設定でPDF作成 (pt単位)
+  const W = 1920, H = 1080;
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [W, H] });
 
-  // 撮影前に一時的にUIを隠す
-  const originalMode = noteMode;
-  noteMode = 'sidebar'; // ホバーノートを映さないため
-  updateView();
+  // Hide UI buttons during capture
+  document.getElementById('app-header').style.display='none';
   
   for(let i=0; i < slides.length; i++) {
-    txt.innerText = `PDFを生成しています... (${i+1} / ${slides.length} 枚目)`;
+    txt.innerText = `PDF出力中... (${i+1} / ${slides.length} 枚目)`;
     const el = slides[i];
     
-    // 描画のために強制アクティブ化
     slides.forEach(s => { s.classList.remove('active'); s.style.display = 'none'; s.style.opacity = 0; });
-    el.classList.add('active');
-    el.style.display = 'flex';
-    el.style.opacity = 1;
-    
-    // ナビボタン等の不可視化
+    el.classList.add('active'); el.style.display = 'flex'; el.style.opacity = 1;
     el.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'none');
 
-    // 完璧なサイズでキャンバス化
     const canvas = await html2canvas(el, { scale: 2, backgroundColor: window.getComputedStyle(el).backgroundColor });
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     
-    // 2ページ目以降ならPDFにページを追加
     if (i > 0) pdf.addPage([W, H], 'landscape');
     pdf.addImage(imgData, 'JPEG', 0, 0, W, H);
-    
-    // 戻す
     el.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'block');
   }
 
-  // 1枚目に戻す・UI復旧
-  noteMode = originalMode;
+  document.getElementById('app-header').style.display='flex';
   currentIndex = 0;
   updateView();
   loader.style.display = 'none';
-  
-  pdf.save('presentation.pdf');
+  pdf.save('SlideGenPro_Presentation.pdf');
 }
 
-function downloadPNG() {
-  if (typeof html2canvas === 'undefined') { alert('画像変換ライブラリ読込中です。'); return; }
-  const slideEl = document.getElementById('slide-' + currentIndex);
-  slideEl.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'none');
-  
-  html2canvas(slideEl, { scale: 2 }).then(canvas => {
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = `slide_${currentIndex+1}.png`;
-    a.click();
-    slideEl.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'block');
-  });
-}
-
-// ==========================================
-// 6. UI補完・ユーティリティ機能
-// ==========================================
 function toInput() {
   document.getElementById('input-panel').style.display = 'flex';
   document.getElementById('preview-panel').style.display = 'none';
@@ -586,22 +613,17 @@ function toInput() {
   document.getElementById('tb-preview').style.display = 'none';
 }
 
-function toggleNoteMode() {
-  noteMode = noteMode === 'hover' ? 'sidebar' : 'hover';
-  document.getElementById('note-sidebar').classList.toggle('active', noteMode === 'sidebar');
-  updateView();
-}
-
 function escapeHTML(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-// キーボード操作
 document.addEventListener('keydown', e => {
   if (document.getElementById('preview-panel').style.display === 'flex') {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goNext();
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goPrev();
-    if (e.key === 'Escape' && agendaVisible) toggleAgenda();
   }
 });
+
+// Init defaults
+applyBuiltinTheme('modern');
 </script>
 </body>
 </html>
