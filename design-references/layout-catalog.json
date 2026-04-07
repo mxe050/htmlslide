@@ -1,0 +1,124 @@
+{
+  "version": "1.0",
+  "description": "スライドレイアウトパターン集。各パターンにはHTMLテンプレートと適用条件を定義。",
+  "layouts": [
+    {
+      "id": "title-center",
+      "name": "タイトルスライド（中央配置）",
+      "description": "プレゼンの冒頭タイトルページ。メインタイトルとサブタイトルを中央に配置。",
+      "use_case": ["title_slide", "presentation_start"],
+      "auto_select_conditions": {
+        "is_first_slide": true,
+        "has_title_metadata": true
+      },
+      "template_class": "layout-title-center"
+    },
+    {
+      "id": "title-left-image",
+      "name": "タイトルスライド（左寄せ＋画像右）",
+      "description": "タイトルを左に配置し、右半分に画像またはグラフィックを表示。",
+      "use_case": ["title_slide", "cover_with_image"],
+      "auto_select_conditions": {
+        "has_image": true,
+        "is_title_type": true
+      },
+      "template_class": "layout-title-left"
+    },
+    {
+      "id": "two-column",
+      "name": "2カラムレイアウト",
+      "description": "左右に等分した2カラム構成。比較・対比・補足説明に適す。",
+      "use_case": ["content", "comparison", "default"],
+      "auto_select_conditions": {
+        "bullet_count_range": [4, 5],
+        "default": true
+      },
+      "template_class": "layout-two-col"
+    },
+    {
+      "id": "three-column",
+      "name": "3カラムレイアウト",
+      "description": "3つの要素を横並びに表示。3つの特徴・選択肢・フェーズ比較に適す。",
+      "use_case": ["features", "options", "phases"],
+      "auto_select_conditions": {
+        "bullet_count_exact": 3,
+        "keywords": ["特徴", "フェーズ", "ポイント", "選択肢"]
+      },
+      "template_class": "layout-three-col"
+    },
+    {
+      "id": "big-number",
+      "name": "大きな数字＋説明文",
+      "description": "中央に大きな数値を配置し、その説明文を周囲に添える。データ強調に最適。",
+      "use_case": ["data_highlight", "kpi", "statistics"],
+      "auto_select_conditions": {
+        "has_number_data": true,
+        "bullet_count_range": [1, 2]
+      },
+      "template_class": "layout-big-number"
+    },
+    {
+      "id": "fullbleed-image",
+      "name": "画像フルブリード＋テキストオーバーレイ",
+      "description": "画像をスライド全体に表示し、テキストをオーバーレイで重ねる。インパクトのある演出。",
+      "use_case": ["visual_impact", "quote_with_background"],
+      "auto_select_conditions": {
+        "has_image": true,
+        "bullet_count_range": [0, 2]
+      },
+      "template_class": "layout-fullbleed"
+    },
+    {
+      "id": "quote-message",
+      "name": "引用・キーメッセージ",
+      "description": "1つの重要なメッセージや引用文を大きく中央に配置。インパクト重視。",
+      "use_case": ["key_message", "quote", "emphasis"],
+      "auto_select_conditions": {
+        "bullet_count_range": [0, 1],
+        "keywords": ["引用", "メッセージ", "ポイント", "重要"]
+      },
+      "template_class": "layout-quote"
+    },
+    {
+      "id": "timeline-steps",
+      "name": "タイムライン・ステップ表示",
+      "description": "順序立てたステップや時系列を視覚化。フロー・プロセス説明に最適。",
+      "use_case": ["steps", "process", "timeline", "roadmap"],
+      "auto_select_conditions": {
+        "keywords": ["ステップ", "フェーズ", "段階", "手順", "プロセス", "ロードマップ", "計画"]
+      },
+      "template_class": "layout-timeline"
+    },
+    {
+      "id": "before-after",
+      "name": "比較（Before/After）",
+      "description": "2つの状態を左右で比較表示。課題解決前後・ビフォーアフターに最適。",
+      "use_case": ["comparison", "before_after", "problem_solution"],
+      "auto_select_conditions": {
+        "keywords": ["vs", "比較", "Before", "After", "現状", "改善", "課題", "解決"]
+      },
+      "template_class": "layout-before-after"
+    },
+    {
+      "id": "section-divider",
+      "name": "セクション扉ページ",
+      "description": "セクション切替時に自動挿入される扉ページ。メインカラー背景にセクション名を大きく中央配置。",
+      "use_case": ["section_start"],
+      "auto_select_conditions": {
+        "is_section_divider": true
+      },
+      "template_class": "layout-section-divider"
+    },
+    {
+      "id": "content-bullets",
+      "name": "コンテンツ（箇条書き）",
+      "description": "左にタイトル、右または下に箇条書きリストを配置する標準コンテンツレイアウト。",
+      "use_case": ["content", "list"],
+      "auto_select_conditions": {
+        "bullet_count_range": [2, 5],
+        "default_content": true
+      },
+      "template_class": "layout-content-bullets"
+    }
+  ]
+}

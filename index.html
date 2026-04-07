@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>SlideGen Pro - AI Assistant</title>
+<style>
+  /* =========================================
+     CSS Variables (Design Core)
+     ========================================= */
+  :root {
+    --bg-app: #f4f6f8;
+    --c-primary: #0f766e;
+    --c-text: #334155;
+    --slide-bg: #ffffff;
+  }
+  
+  /* =========================================
+     Base Layout
+     ========================================= */
+  body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: 'Helvetica Neue', Arial, sans-serif; background: var(--bg-app); color: var(--c-text); overflow: hidden; transition: background 0.3s; }
+  .header { display: flex; justify-content: space-between; padding: 12px 20px; background: #fff; border-bottom: 1px solid #ccc; z-index: 100; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  .main-area { display: flex; flex: 1; overflow: hidden; }
+
+  /* Input Mode */
+  .input-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; max-width: 900px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+  .input-panel textarea { flex: 1; resize: none; margin-bottom: 20px; font-family: monospace; padding: 15px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; line-height: 1.6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  
+  /* =========================================
+     Preview Mode & Relative Resizing
+     ========================================= */
+  .preview-panel { flex: 1; display: none; flex-direction: column; align-items: center; justify-content: center; background: #222; position: relative; overflow: hidden; }
+  .slide-container-wrapper { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 30px; box-sizing: border-box; }
+  
+  /* Slide Boundary */
+  .slide-container {
+    aspect-ratio: 16 / 9;
+    background: var(--slide-bg);
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    overflow: hidden;
+    border-radius: 8px;
+    width: 100%;
+    max-height: 100%;
+    transition: background 0.3s;
+  }
+  
+  /* Slide Contents */
+  .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+  .slide.active { display: flex; opacity: 1; }
+  .s-title { font-size: calc(var(--cw) * 5); font-weight: bold; margin-bottom: calc(var(--cw) * 4); color: var(--c-primary); line-height: 1.3; }
+  .s-content { font-size: calc(var(--cw) * 2.8); line-height: 1.8; color: var(--c-text); list-style-position: outside; margin-left: calc(var(--cw) * 3); padding: 0; }
+  .s-content li { margin-bottom: calc(var(--cw) * 1.5); }
+  
+  /* Section Title Page */
+  .slide.is-section { align-items: center; text-align: center; background: var(--c-primary); }
+  .slide.is-section .s-title { color: #fff; font-size: calc(var(--cw) * 7); margin: 0; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+  /* Navigation Click Zones */
+  .nav-left, .nav-right { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: pointer; }
+  .nav-left { left: 0; }
+  .nav-right { right: 0; }
+
+  /* Hover Note Indicator */
+  .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--cw) * 8); z-index: 20; display: flex; align-items: flex-end; }
+  .hover-note-content { 
+    width: 100%; background: rgba(0,0,0,0.85); color: #fff; padding: calc(var(--cw) * 2) calc(var(--cw) * 6);
+    font-size: calc(var(--cw) * 1.8); opacity: 0; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    line-height: 1.6; box-sizing: border-box; pointer-events: none;
+  }
+  .slide:hover .hover-note-content { opacity: 1; pointer-events: auto; }
+
+  /* =========================================
+     Sidebars & Modals
+     ========================================= */
+  .note-sidebar { width: 350px; background: #fff; border-left: 1px solid #ddd; display: none; flex-direction: column; z-index: 50; }
+  .note-sidebar.active { display: flex; }
+  .note-sidebar textarea { flex: 1; border: none; padding: 20px; font-size: 15px; background: #fafafa; margin: 0; resize: none; pointer-events: none; line-height: 1.6; color: #444; }
+  
+  .agenda-sidebar { position: fixed; top: 0; right: -350px; width: 350px; height: 100%; background: #fff; box-shadow: -2px 0 15px rgba(0,0,0,0.2); z-index: 200; transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; }
+  .agenda-sidebar.open { right: 0; }
+  .agenda-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 18px; }
+  .agenda-list { overflow-y: auto; padding: 15px; list-style: none; margin: 0; flex: 1; }
+  .agenda-list li { padding: 12px 15px; cursor: pointer; border-radius: 6px; font-size: 15px; margin-bottom: 5px; transition: background 0.2s; }
+  .agenda-list li:hover { background: #f1f5f9; }
+  .agenda-list li.current { background: var(--c-primary); color: #fff; font-weight: bold; }
+  .agenda-list li.sec-item { font-weight: bold; margin-top: 15px; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0; border-radius: 0; cursor: default; background: none!important; color: var(--c-primary)!important; }
+
+  /* AI Assistant Modal */
+  .ai-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 300; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+  .ai-modal.show { display: flex; opacity: 1; }
+  .ai-box { background: #fff; border-radius: 12px; width: 90%; max-width: 600px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px); transition: transform 0.3s; }
+  .ai-modal.show .ai-box { transform: translateY(0); }
+  .ai-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+  .ai-card h4 { margin: 0 0 5px 0; color: #0f172a; font-size: 16px; }
+  .ai-card p { margin: 0 0 15px 0; font-size: 13px; color: #64748b; }
+  .ai-input-group { display: flex; gap: 10px; }
+  .ai-input-group input, .ai-input-group select { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 150; display: none; backdrop-filter: blur(2px); }
+  .overlay.show { display: block; }
+
+  /* Buttons */
+  button { cursor: pointer; padding: 8px 16px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-weight: bold; transition: 0.2s; color: #333; }
+  button:hover { background: #f8f9fa; }
+  button.primary { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+  button.primary:hover { filter: brightness(1.1); }
+  button.ai-btn { background: #6366f1; color: white; border: none; }
+  button.ai-btn:hover { background: #4f46e5; }
+  
+  /* Loading Overlay for PDF */
+  #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); color: white; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+  .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+<!-- Libraries for perfect PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div id="loading-text">PDFを生成しています... </div>
+</div>
+
+<!-- Header Toolbar -->
+<div class="header">
+  <div style="display:flex; align-items:center; gap: 15px;">
+    <div style="font-weight:900; font-size: 1.4rem; color: var(--c-primary);">SlideGen Pro</div>
+    <button class="ai-btn" onclick="openAIModal()" style="padding: 6px 12px; font-size: 13px;">🤖 AI デザイン / 原稿 アシスト</button>
+  </div>
+  
+  <div id="tb-input" style="display: flex; gap: 10px;">
+    <button class="primary" onclick="generate()" style="padding: 8px 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">🚀 スライド生成</button>
+  </div>
+  
+  <div id="tb-preview" style="display:none; gap: 8px; align-items:center;">
+    <button onclick="toInput()">✏️ 原稿を修正</button>
+    <div style="width: 1px; height: 24px; background: #ccc; margin: 0 5px;"></div>
+    <button onclick="toggleNoteMode()">📝 サイドバー原稿枠 ON/OFF</button>
+    <div style="width: 1px; height: 24px; background: #ccc; margin: 0 5px;"></div>
+    <button onclick="downloadPDF()">📄 完全版PDF保存</button>
+    <button class="primary" onclick="toggleAgenda()">≡ アジェンダ</button>
+  </div>
+</div>
+
+<!-- Main Workspace -->
+<div class="main-area">
+  <!-- Input Mode -->
+  <div class="input-panel" id="input-panel">
+    <textarea id="source-text" placeholder="ここに原稿を入力してください。
+上の「🤖 AI デザイン / 原稿 アシスト」ボタンから、テーマに沿った台本を丸ごと自動生成することもできます。"></textarea>
+  </div>
+
+  <!-- Preview Mode -->
+  <div class="preview-panel" id="preview-panel">
+    <div class="slide-container-wrapper" id="slide-wrapper">
+      <div class="slide-container" id="slide-container">
+        <!-- 実行時にここにスライドHTMLが注入される -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Note Sidebar -->
+  <div class="note-sidebar" id="note-sidebar">
+    <div style="padding: 15px 20px; border-bottom: 1px solid #ddd; background: var(--slide-bg); font-weight: bold; font-size: 14px; color: var(--c-primary);">🗣 発表者用ノート（台本）</div>
+    <textarea id="sidebar-note-content" readonly placeholder="このスライドには台本がありません。"></textarea>
+  </div>
+</div>
+
+<!-- Sliding Agenda Overlay -->
+<div class="overlay" id="overlay" onclick="toggleAgenda()"></div>
+<div class="agenda-sidebar" id="agenda-sidebar">
+  <div class="agenda-header">
+    <span style="font-weight:bold; color: var(--c-primary);">📋 アジェンダ</span>
+    <button onclick="toggleAgenda()" style="padding: 4px 10px; border: none; background: #eee;">✕</button>
+  </div>
+  <ul class="agenda-list" id="agenda-list"></ul>
+</div>
+
+<!-- AI Assist Modal -->
+<div class="ai-modal" id="ai-modal" onclick="if(event.target===this) closeAIModal()">
+  <div class="ai-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+      <h3 style="margin:0; color:#1e293b;">🤖 AI アシストパネル</h3>
+      <button onclick="closeAIModal()" style="border:none; background:transparent; font-size:20px;">✕</button>
+    </div>
+
+    <!-- デザイン生成部 -->
+    <div class="ai-card">
+      <h4>🎨 1. デザインを切り替える・生成する</h4>
+      <p>テンプレートから選ぶか、イメージを伝えてオリジナルデザインを生成します。</p>
+      
+      <div class="ai-input-group" style="margin-bottom: 10px;">
+        <select id="theme-select" onchange="applyBuiltinTheme(this.value)">
+          <option value="light">ライト（白背景・標準）</option>
+          <option value="modern">モダン（ダークグレー背景）</option>
+          <option value="dark">ナイト（完全ブラック背景）</option>
+          <option value="corporate">コーポレート（白背景・青基調）</option>
+          <option value="warm">ウォーム（暖色系・柔らかい）</option>
+          <option value="elegant">エレガント（高級感・セピア）</option>
+        </select>
+      </div>
+      <div class="ai-input-group">
+        <input type="text" id="custom-theme-input" placeholder="例：ダークでクールな青ベース、ポップな明るい黄色">
+        <button onclick="generateCustomTheme()" class="ai-btn">✨ 色を生成</button>
+      </div>
+    </div>
+
+    <!-- 原稿生成部 -->
+    <div class="ai-card">
+      <h4>✍️ 2. 原稿（ドラフト）を自動生成する</h4>
+      <p>テーマを入力すると、システムがプレゼンの骨格と台本を自動展開します。（※既存の原稿は上書きされます）</p>
+      <div class="ai-input-group">
+        <input type="text" id="auto-draft-input" placeholder="例：DX推進の必要性とメリット、新入社員向けビジネスマナー">
+        <button onclick="generateAutoDraft()" class="ai-btn" style="background:#0ea5e9;">✒️ 原稿を作成</button>
+      </div>
+    </div>
+
+    <button onclick="closeAIModal()" style="width:100%; padding:12px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px;">閉じる</button>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// 1. デザイン・AIアシスト関連機能
+// ==========================================
+const DESIGN_THEMES = {
+  light:     { bgApp: '#e2e8f0', colorPrimary: '#0f766e', colorText: '#334155', slideBg: '#ffffff' },
+  modern:    { bgApp: '#0f172a', colorPrimary: '#3b82f6', colorText: '#cbd5e1', slideBg: '#1e293b' },
+  dark:      { bgApp: '#000000', colorPrimary: '#fbbf24', colorText: '#d1d5db', slideBg: '#111827' },
+  corporate: { bgApp: '#f8fafc', colorPrimary: '#1d4ed8', colorText: '#1e293b', slideBg: '#ffffff' },
+  warm:      { bgApp: '#fffdd0', colorPrimary: '#d97706', colorText: '#451a03', slideBg: '#fffbeb' },
+  elegant:   { bgApp: '#292524', colorPrimary: '#d4af37', colorText: '#f5f5f4', slideBg: '#1c1917' }
+};
+
+function applyBuiltinTheme(themeId) {
+  const t = DESIGN_THEMES[themeId] || DESIGN_THEMES.light;
+  applyThemeTokens(t.bgApp, t.colorPrimary, t.colorText, t.slideBg);
+}
+
+function applyThemeTokens(bgApp, primary, text, slideBg) {
+  const root = document.documentElement.style;
+  root.setProperty('--bg-app', bgApp);
+  root.setProperty('--c-primary', primary);
+  root.setProperty('--c-text', text);
+  root.setProperty('--slide-bg', slideBg);
+}
+
+// 簡易ヒューリスティックによるカスタムテーマ生成
+function generateCustomTheme() {
+  const input = document.getElementById('custom-theme-input').value;
+  if(!input.trim()) { alert('どんなデザインにしたいかテキストを入力してください。'); return; }
+  
+  let bg = '#ffffff', pri = '#3b82f6', txt = '#1e293b', sbg = '#f8fafc';
+  
+  // ダーク系判定
+  if(input.match(/ダーク|黒|暗|夜/)) { bg = '#0f172a'; sbg = '#1e293b'; txt = '#f8fafc'; pri= '#60a5fa'; }
+  else if(input.match(/ポップ|明|黄|かわいい/)) { bg = '#fefce8'; sbg = '#fef08a'; txt = '#422006'; pri = '#eab308'; }
+
+  // カラー判定
+  if(input.match(/赤|情熱/)) pri = '#ef4444';
+  else if(input.match(/緑|自然|エコ/)) pri = '#10b981';
+  else if(input.match(/オレンジ|元気/)) pri = '#f97316';
+  else if(input.match(/紫|クール/)) pri = '#8b5cf6';
+  else if(input.match(/ピンク/)) pri = '#ec4899';
+  else if(input.match(/青|ブルー/)) pri = '#3b82f6';
+  
+  applyThemeTokens(bg, pri, txt, sbg);
+  document.getElementById('theme-select').value = ""; // reset pulldown
+  alert(`「${input}」のイメージからデザインを生成・適用しました！`);
+}
+
+// AIアシストによる疑似原稿生成ジェネレーター
+function generateAutoDraft() {
+  const topic = document.getElementById('auto-draft-input').value.trim() || "新しいプロジェクト提案";
+  
+  const draft = `Slide 1: タイトル
+メインタイトル: ${topic}について
+サブタイトル: 基礎的な理解と今後の具体的なアプローチ
+発表者: [氏名を入力]
+台本: 本日は「${topic}」について、皆様にご説明させていただきます。
+
+--- セクション: 背景と課題 ---
+
+Slide 2: なぜ今、「${topic}」なのか？
+・ 取り巻く環境の急速な変化と市場の動向
+・ 我々の既存プロセスにおける限界と課題
+・ 競合他社はすでに動き始めている事実
+台本: まず、なぜ今このテーマが重要視されているのか、その背景を整理してみたいと思います。
+
+Slide 3: 放置した場合に想定されるリスク
+・ 生産性の低下や機会損失の発生
+・ 新たな環境への適応の遅れ
+・ 最終的なコストの増大と競争力低下
+台本: もしこの課題を後回しにしてしまった場合、長期的には大きなリスクが我々に降りかかります。
+
+--- セクション: 具体的なアプローチ ---
+
+Slide 4: 成功させるための3つのポイント
+ポイント1. 【目標設定】最終的なゴールとKPIの明確化
+ポイント2. 【段階的推進】スモールスタートによるリスク低減
+ポイント3. 【効果測定】実行後の継続的なレビューと改善
+台本: それでは、これらを成功に導くための「3つの重要なポイント」を解説します。
+
+Slide 5: 次のステップ・今後のアクションプラン
+1. 現状の細かい課題の洗い出しと可視化（今週中）
+2. プロジェクト推進チームの組成提案（来週）
+3. 特定部門でのパイロットテスト（PoC）の実行（来月）
+台本: 本日の提案を踏まえ、今後我々がどのようにアクションを起こしていくべきか、具体的なステップです。`;
+
+  document.getElementById('source-text').value = draft;
+  closeAIModal();
+  toInput(); // 入力画面に戻す
+  
+  alert(`「${topic}」の構成と台本を含むスライド原稿を自動作成しました！\nテキストを自由に微調整してから「🚀 スライド生成」を押してください。`);
+}
+
+function openAIModal() { document.getElementById('ai-modal').classList.add('show'); }
+function closeAIModal() { document.getElementById('ai-modal').classList.remove('show'); }
+
+// 初期化
+applyBuiltinTheme('light');
+
+
+// ==========================================
+// 2. 堅牢なパーサー（原稿解析エンジン）
+// ==========================================
+function parseText(text) {
+  const lines = text.split('\n');
+  const slides = [];
+  let currentSlide = null;
+
+  const pushSlide = () => { if (currentSlide) slides.push(currentSlide); };
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+
+    // A: 扉ページ（セクション）
+    const secMatch = line.match(/^---\s*(?:セクション)?\s*[:：\-]?\s*(.+?)\s*---$/);
+    if (secMatch) {
+      pushSlide();
+      currentSlide = { isSection: true, title: secMatch[1], bullets: [], notes: '' };
+      continue;
+    }
+
+    // B: スライドタイトル
+    const slideMatch = line.match(/^[-・*\s]*(?:スライド|Slide|ページ|Page)\s*\d*\s*[:：\- ]\s*(.+)/i) || line.match(/^#+\s+(.+)/);
+    if (slideMatch) {
+      pushSlide();
+      currentSlide = { isSection: false, title: slideMatch[1].trim(), bullets: [], notes: '', inNotes: false };
+      continue;
+    }
+
+    // C: 台本開始の目印
+    const noteMatch = line.match(/^(?:台本|ノート|note|メモ)\s*[:：]\s*(.*)/i);
+    if (noteMatch && currentSlide) {
+      currentSlide.notes = noteMatch[1].trim();
+      currentSlide.inNotes = true;
+      continue;
+    }
+
+    // （フォールバック）タイトル指定なしで文章が始まったら
+    if (!currentSlide) {
+      currentSlide = { isSection: false, title: line, bullets: [], notes: '', inNotes: false };
+      continue;
+    }
+
+    // D: 箇条書き / 台本追記
+    if (currentSlide.inNotes) {
+      currentSlide.notes += (currentSlide.notes ? '\n' : '') + line;
+    } else {
+      const cleanLine = line.replace(/^[-・*]\s*/, '');
+      currentSlide.bullets.push(cleanLine);
+    }
+  }
+  pushSlide();
+  return slides;
+}
+
+// ==========================================
+// 3. スライド・UI 制御
+// ==========================================
+let currentSlides = [];
+let currentIndex = 0;
+let noteMode = 'hover';
+
+function generate() {
+  const text = document.getElementById('source-text').value;
+  if (!text.trim()) { alert('原稿を入力してください。'); return; }
+  
+  currentSlides = parseText(text);
+  if (currentSlides.length === 0) { alert('読み取れるスライドがありませんでした。'); return; }
+
+  currentIndex = 0;
+  renderSlidesDOM();
+  buildAgenda();
+  
+  document.getElementById('input-panel').style.display = 'none';
+  document.getElementById('preview-panel').style.display = 'flex';
+  document.getElementById('tb-input').style.display = 'none';
+  document.getElementById('tb-preview').style.display = 'flex';
+
+  const container = document.getElementById('slide-container');
+  const ro = new ResizeObserver(entries => {
+    if(entries[0]) {
+      const w = entries[0].contentRect.width;
+      container.style.setProperty('--cw', (w / 100) + 'px');
+    }
+  });
+  ro.observe(container);
+
+  updateView();
+}
+
+function renderSlidesDOM() {
+  const container = document.getElementById('slide-container');
+  container.innerHTML = '';
+
+  currentSlides.forEach((slide, idx) => {
+    const div = document.createElement('div');
+    div.className = 'slide' + (slide.isSection ? ' is-section' : '');
+    div.id = 'slide-' + idx;
+    
+    let html = `<div class="s-title">${escapeHTML(slide.title)}</div>`;
+    
+    if (!slide.isSection && slide.bullets.length > 0) {
+      html += `<ul class="s-content">`;
+      slide.bullets.forEach(b => { html += `<li>${escapeHTML(b)}</li>`; });
+      html += `</ul>`;
+    }
+
+    html += `<div class="nav-left" onclick="goPrev()"></div>`;
+    html += `<div class="nav-right" onclick="goNext()"></div>`;
+
+    if (slide.notes) {
+      html += `
+        <div class="hover-note-zone" id="hover-note-${idx}">
+          <div class="hover-note-content">${escapeHTML(slide.notes).replace(/\n/g, '<br>')}</div>
+        </div>
+      `;
+    }
+    div.innerHTML = html;
+    container.appendChild(div);
+  });
+}
+
+function updateView() {
+  const slides = document.querySelectorAll('.slide');
+  slides.forEach((el, idx) => {
+    if (idx === currentIndex) el.classList.add('active');
+    else el.classList.remove('active');
+    
+    const hoverZone = document.getElementById('hover-note-' + idx);
+    if(hoverZone) hoverZone.style.display = (noteMode === 'hover') ? 'flex' : 'none';
+  });
+
+  if (noteMode === 'sidebar') {
+    document.getElementById('sidebar-note-content').value = currentSlides[currentIndex].notes || '';
+  }
+
+  document.querySelectorAll('.agenda-list li').forEach((li) => {
+    li.classList.toggle('current', li.dataset.index == currentIndex);
+  });
+}
+
+function goPrev() { if (currentIndex > 0) { currentIndex--; updateView(); } }
+function goNext() { if (currentIndex < currentSlides.length - 1) { currentIndex++; updateView(); } }
+
+
+// ==========================================
+// 4. アジェンダ処理
+// ==========================================
+let agendaVisible = false;
+
+function buildAgenda() {
+  const ul = document.getElementById('agenda-list');
+  ul.innerHTML = '';
+  currentSlides.forEach((slide, idx) => {
+    const li = document.createElement('li');
+    li.dataset.index = idx;
+    if (slide.isSection) {
+      li.className = 'sec-item';
+      li.textContent = `— ${slide.title} —`;
+    } else {
+      li.textContent = `${idx + 1}. ${slide.title}`;
+    }
+    li.onclick = () => { currentIndex = idx; updateView(); toggleAgenda(); };
+    ul.appendChild(li);
+  });
+}
+
+function toggleAgenda() {
+  agendaVisible = !agendaVisible;
+  document.getElementById('agenda-sidebar').classList.toggle('open', agendaVisible);
+  document.getElementById('overlay').classList.toggle('show', agendaVisible);
+}
+
+
+// ==========================================
+// 5. ズレない完全PDF & PNG 処理 (html2canvas + jspdf)
+// ==========================================
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  if (!jsPDF || typeof html2canvas === 'undefined') {
+    alert('PDF生成ライブラリを読み込み中です。少々お待ちください。');
+    return;
+  }
+  
+  const slides = document.querySelectorAll('.slide');
+  if (slides.length === 0) return;
+
+  // ローディング画面表示
+  const loader = document.getElementById('loading-overlay');
+  const txt = document.getElementById('loading-text');
+  loader.style.display = 'flex';
+  
+  // 16:9比率をピクセル単位で定義 (フルHD解像度として生成)
+  const W = 1920; 
+  const H = 1080;
+  
+  // ランドスケープ設定でPDF作成 (pt単位)
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [W, H] });
+
+  // 撮影前に一時的にUIを隠す
+  const originalMode = noteMode;
+  noteMode = 'sidebar'; // ホバーノートを映さないため
+  updateView();
+  
+  for(let i=0; i < slides.length; i++) {
+    txt.innerText = `PDFを生成しています... (${i+1} / ${slides.length} 枚目)`;
+    const el = slides[i];
+    
+    // 描画のために強制アクティブ化
+    slides.forEach(s => { s.classList.remove('active'); s.style.display = 'none'; s.style.opacity = 0; });
+    el.classList.add('active');
+    el.style.display = 'flex';
+    el.style.opacity = 1;
+    
+    // ナビボタン等の不可視化
+    el.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'none');
+
+    // 完璧なサイズでキャンバス化
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: window.getComputedStyle(el).backgroundColor });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    
+    // 2ページ目以降ならPDFにページを追加
+    if (i > 0) pdf.addPage([W, H], 'landscape');
+    pdf.addImage(imgData, 'JPEG', 0, 0, W, H);
+    
+    // 戻す
+    el.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'block');
+  }
+
+  // 1枚目に戻す・UI復旧
+  noteMode = originalMode;
+  currentIndex = 0;
+  updateView();
+  loader.style.display = 'none';
+  
+  pdf.save('presentation.pdf');
+}
+
+function downloadPNG() {
+  if (typeof html2canvas === 'undefined') { alert('画像変換ライブラリ読込中です。'); return; }
+  const slideEl = document.getElementById('slide-' + currentIndex);
+  slideEl.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'none');
+  
+  html2canvas(slideEl, { scale: 2 }).then(canvas => {
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `slide_${currentIndex+1}.png`;
+    a.click();
+    slideEl.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'block');
+  });
+}
+
+// ==========================================
+// 6. UI補完・ユーティリティ機能
+// ==========================================
+function toInput() {
+  document.getElementById('input-panel').style.display = 'flex';
+  document.getElementById('preview-panel').style.display = 'none';
+  document.getElementById('tb-input').style.display = 'flex';
+  document.getElementById('tb-preview').style.display = 'none';
+}
+
+function toggleNoteMode() {
+  noteMode = noteMode === 'hover' ? 'sidebar' : 'hover';
+  document.getElementById('note-sidebar').classList.toggle('active', noteMode === 'sidebar');
+  updateView();
+}
+
+function escapeHTML(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+// キーボード操作
+document.addEventListener('keydown', e => {
+  if (document.getElementById('preview-panel').style.display === 'flex') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goNext();
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goPrev();
+    if (e.key === 'Escape' && agendaVisible) toggleAgenda();
+  }
+});
+</script>
+</body>
+</html>

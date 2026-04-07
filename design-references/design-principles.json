@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "description": "スライドデザインの核心原則。すべてのスライド生成はこの原則に従う。",
+  "principles": {
+    "core_three": {
+      "title": "3つの核心原則",
+      "items": [
+        {
+          "name": "揃える",
+          "description": "すべての要素をグリッドに沿わせ、視覚的な整合性を担保する",
+          "rule": "要素の配置はグリッドシステムに準拠し、すべて揃える"
+        },
+        {
+          "name": "絞る",
+          "description": "色数は背景色・メインカラー・アクセントカラーの最大3色に抑え、理想は2色以内",
+          "rule": "使用色数は最大3色（背景色・メインカラー・アクセントカラー）、理想は2色以内"
+        },
+        {
+          "name": "余白を取る",
+          "description": "情報がある部分を際立たせるために、余白を情報の一部として扱い、埋めようとしない",
+          "rule": "余白は画面全体の30%以上を確保する"
+        }
+      ]
+    },
+    "content": {
+      "one_message_per_slide": {
+        "enabled": true,
+        "description": "1スライド1メッセージの原則。スライド1枚に込めるメッセージは1つだけ"
+      },
+      "whitespace": {
+        "minimum_percentage": 30,
+        "description": "余白は画面全体の30%以上を確保"
+      }
+    },
+    "color": {
+      "max_colors": 3,
+      "ideal_colors": 2,
+      "color_roles": ["background", "main", "accent"],
+      "wcag_contrast_ratio": 4.5,
+      "wcag_standard": "AA"
+    },
+    "typography": {
+      "max_font_families": 2,
+      "description": "1スライドデッキ内で使用するフォントファミリーは最大2種類まで"
+    },
+    "layout": {
+      "grid_system": true,
+      "description": "要素の配置はグリッドシステムに準拠し、すべて揃える",
+      "visual_flow": ["Z-pattern", "F-pattern"],
+      "description_flow": "視線の流れはZ型またはF型を意識する"
+    }
+  }
+}

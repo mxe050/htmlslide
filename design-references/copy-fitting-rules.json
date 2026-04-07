@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "description": "スライド文字組み・改行ルール。コピーフィッティングの基準。",
+  "heading": {
+    "max_lines": 2,
+    "chars_per_line_ideal": 20,
+    "chars_per_line_max": 28,
+    "description": "見出しは最大2行まで、1行あたりの文字数は20文字前後を目安"
+  },
+  "body_text": {
+    "line_height_min": 1.6,
+    "line_height_max": 1.8,
+    "line_height_unit": "em",
+    "description": "本文テキストの行間は文字サイズの1.6〜1.8倍"
+  },
+  "bullet_points": {
+    "max_items_per_slide": 5,
+    "description": "箇条書きの項目数は1スライドあたり最大5項目まで"
+  },
+  "japanese_typography": {
+    "avoid_particles_at_line_start": true,
+    "particles": ["の", "と", "は", "が", "を", "に", "で", "へ", "も", "や", "か", "な", "ね", "よ"],
+    "description": "助詞（の、と、は、が、を、に、で、へ等）を行頭に出さない"
+  },
+  "font_size": {
+    "minimum_cqw": 1.2,
+    "description": "本文テキストが読めないほど小さくなっていないか（コンテナ幅の1.2%以上）",
+    "recommended": {
+      "slide_title": "4.5cqw",
+      "section_title": "6cqw",
+      "body": "2.2cqw",
+      "caption": "1.5cqw",
+      "speaker_note": "1.4cqw"
+    }
+  }
+}

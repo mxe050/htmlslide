@@ -1,0 +1,55 @@
+{
+  "id": "modern",
+  "name": "モダン・スタイリッシュ",
+  "description": "ダーク背景にブルーアクセントを使ったモダンでプロフェッショナルなスタイル。スタートアップ・テック・コンサルティングに適す。",
+  "colors": {
+    "bg_primary": "#0f172a",
+    "bg_secondary": "#1e293b",
+    "bg_card": "#1e293b",
+    "color_main": "#3b82f6",
+    "color_main_light": "#60a5fa",
+    "color_accent": "#f59e0b",
+    "color_text": "#f8fafc",
+    "color_text_secondary": "#94a3b8",
+    "color_text_muted": "#64748b",
+    "color_border": "#334155",
+    "color_section_bg": "#1d4ed8",
+    "color_section_text": "#ffffff",
+    "color_bullet_marker": "#3b82f6"
+  },
+  "typography": {
+    "font_heading": "Noto Sans JP",
+    "font_body": "Inter",
+    "font_fallback": "sans-serif",
+    "font_weight_heading": "700",
+    "font_weight_body": "400",
+    "font_weight_emphasis": "600",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+  },
+  "shape": {
+    "border_radius": "0.5rem",
+    "border_radius_large": "1rem",
+    "border_radius_small": "0.25rem",
+    "card_border": "1px solid rgba(51,65,85,0.8)"
+  },
+  "shadow": {
+    "card": "0 4px 24px rgba(0,0,0,0.4)",
+    "text": "0 2px 8px rgba(0,0,0,0.5)",
+    "section_accent": "inset 0 0 0 1px rgba(59,130,246,0.3)"
+  },
+  "animation": {
+    "slide_transition": "fade",
+    "transition_duration": "0.35s",
+    "transition_easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "hover_scale": "1.02",
+    "sidebar_transition": "0.3s ease"
+  },
+  "decorative": {
+    "title_accent_line": true,
+    "accent_line_color": "#3b82f6",
+    "accent_line_width": "4cqw",
+    "accent_line_height": "0.3cqw",
+    "grid_dot_pattern": false,
+    "gradient_overlay": true
+  }
+}

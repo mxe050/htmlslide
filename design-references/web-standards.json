@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "description": "Web表示の基本原則。レスポンシブ・アクセシビリティ・パフォーマンスの基準。",
+  "layout": {
+    "aspect_ratio": "16/9",
+    "container_type": "inline-size",
+    "unit_rules": {
+      "font_size": ["cqw", "vw"],
+      "spacing": ["%", "cqw"],
+      "dimensions": ["%"],
+      "avoid": ["px固定値（原則禁止）"]
+    },
+    "description": "フォントサイズはcqwまたはvw、余白・パディングは%またはcqw、要素の幅・高さは%を使用"
+  },
+  "responsiveness": {
+    "breakpoints": {
+      "large": "1920px以上",
+      "medium": "1280px",
+      "small": "768px"
+    },
+    "requirement": "すべてのブレークポイントでレイアウトが崩れないこと"
+  },
+  "performance": {
+    "max_slides": 100,
+    "transition_fps": 60,
+    "initial_load_seconds": 3,
+    "png_export_100slides_seconds": 30
+  },
+  "accessibility": {
+    "keyboard_navigation": {
+      "enabled": true,
+      "keys": ["Tab", "Enter", "ArrowLeft", "ArrowRight", "Escape"]
+    },
+    "aria": {
+      "enabled": true,
+      "description": "スクリーンリーダー対応のためのARIA属性を適切に設定"
+    },
+    "focus_indicator": {
+      "visible": true,
+      "style": ":focus-visible"
+    },
+    "wcag_level": "AA"
+  },
+  "animation": {
+    "transition_type": "fade",
+    "duration_ms": 300,
+    "easing": "ease-in-out"
+  }
+}

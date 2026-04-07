@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "description": "図・表・グラフのCSSパターン定義。スライド内で使えるビジュアル要素カタログ。",
+  "diagrams": [
+    {
+      "id": "simple-table",
+      "name": "シンプルテーブル",
+      "description": "ヘッダー行付きのシンプルな表。データ比較・一覧表示に適す。",
+      "css_class": "diagram-table",
+      "markdown_trigger": "|"
+    },
+    {
+      "id": "flow-arrow",
+      "name": "矢印フロー図",
+      "description": "左から右へ流れる矢印付きのフロー図。プロセス・手順の視覚化。",
+      "css_class": "diagram-flow",
+      "markdown_trigger": "->"
+    },
+    {
+      "id": "numbered-list",
+      "name": "番号付きリスト",
+      "description": "1から順番に番号付きで表示するリスト。手順・優先順位の説明。",
+      "css_class": "diagram-numbered",
+      "markdown_trigger": "1."
+    },
+    {
+      "id": "highlight-box",
+      "name": "ハイライトボックス",
+      "description": "重要情報を枠で囲んで強調表示するボックス。",
+      "css_class": "diagram-highlight-box",
+      "markdown_trigger": ">>>"
+    },
+    {
+      "id": "progress-bar",
+      "name": "プログレスバー",
+      "description": "達成度や進捗を視覚化するバー。KPI・目標進捗の表示。",
+      "css_class": "diagram-progress",
+      "markdown_trigger": "[progress:"
+    }
+  ]
+}
