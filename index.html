@@ -55,7 +55,6 @@
   }
   
   /* Speaker Note Components */
-  /* 1. Bottom Fixed */
   .speaker-note-bottom {
     height: 25%; min-height: 150px; background: #1e293b; border-top: 1px solid #334155;
     display: none; flex-direction: column; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 50;
@@ -68,7 +67,7 @@
   }
   .speaker-note-textarea:focus { outline: none; }
 
-  /* 2. Hover Zone */
+  /* Hover Zone */
   .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--cw) * 8); z-index: 40; display: flex; align-items: flex-end; pointer-events: auto; }
   .hover-note-content { 
     width: 100%; background: rgba(0,0,0,0.85); color: #fff; padding: calc(var(--cw) * 2) calc(var(--cw) * 6);
@@ -79,9 +78,23 @@
   .hover-note-content.active { display: block; }
   .hover-note-zone:hover .hover-note-content { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-  /* Slide Core Styles */
+  /* Slide Core Styles & Entrance Animations */
+  @keyframes slideUpFade { from { opacity: 0; transform: translateY(calc(var(--cw)*2)); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes glowPulse { 0% { text-shadow: 0 0 10px var(--c-primary), 0 0 20px var(--c-primary); } 50% { text-shadow: 0 0 20px var(--c-primary), 0 0 40px var(--c-primary), 0 0 60px var(--c-primary); } 100% { text-shadow: 0 0 10px var(--c-primary), 0 0 20px var(--c-primary); } }
+  
   .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; font-family: var(--font-main); color: var(--c-text); box-sizing: border-box; }
   .slide.active { display: flex; }
+  
+  /* Animation Assignments */
+  .slide.active .s-title { animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .slide.active .s-content li { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+  .slide.active .s-content li:nth-child(1) { animation-delay: 0.1s; }
+  .slide.active .s-content li:nth-child(2) { animation-delay: 0.2s; }
+  .slide.active .s-content li:nth-child(3) { animation-delay: 0.3s; }
+  .slide.active .s-content li:nth-child(4) { animation-delay: 0.4s; }
+  .slide.active .s-content li:nth-child(5) { animation-delay: 0.5s; }
+  .slide.active .s-content li:nth-child(n+6) { animation-delay: 0.6s; }
+
   .s-title { font-size: calc(var(--cw) * 5); font-weight: 900; margin-bottom: calc(var(--cw) * 4); color: var(--c-primary); line-height: 1.35; letter-spacing: 0.02em; }
   .s-content { font-size: calc(var(--cw) * 2.8); line-height: 1.8; list-style-position: outside; margin-left: calc(var(--cw) * 3); padding: 0; }
   .s-content li { margin-bottom: calc(var(--cw) * 1.5); }
@@ -89,7 +102,7 @@
   .slide.is-section { align-items: center; text-align: center; background: var(--c-primary); justify-content: center; }
   .slide.is-section .s-title { color: #fff; font-size: calc(var(--cw) * 6.5); margin: 0; text-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
-  /* Interactive Navigation Overlays (Z-index high enough to not be blocked) */
+  /* Interactive Navigation Overlays */
   .nav-left, .nav-right { position: absolute; top: 0; bottom: calc(var(--cw) * 8); width: 40%; z-index: 30; cursor: pointer; transition: background 0.3s; }
   .nav-left { left: 0; }
   .nav-right { right: 0; }
@@ -104,7 +117,6 @@
     display: flex; flex-direction: column; border-left: 1px solid rgba(0,0,0,0.05);
   }
   #agenda-trigger-zone:hover + .agenda-sidebar, .agenda-sidebar:hover { right: 0; }
-  
   .agenda-header { padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; font-size: 16px; font-weight: bold; color: var(--c-primary); }
   .agenda-list { overflow-y: auto; padding: 15px; list-style: none; margin: 0; flex: 1; }
   .agenda-list li { padding: 12px 15px; cursor: pointer; border-radius: 8px; font-size: 14px; margin-bottom: 6px; transition: all 0.2s; color: #475569; }
@@ -118,7 +130,6 @@
   .ai-box { background: #fff; border-radius: 16px; width: 90%; max-width: 650px; padding: 35px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); transform: translateY(20px) scale(0.98); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto;}
   .ai-modal.show .ai-box { transform: translateY(0) scale(1); }
   .ai-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; margin-bottom: 20px; transition: border-color 0.3s; }
-  
   .ai-input-group { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
   .ai-input-group input[type="text"], .ai-input-group select { flex: 1; min-width: 200px; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; transition: all 0.2s; }
   .ai-input-group input[type="color"] { border: 1px solid #cbd5e1; border-radius: 8px; height: 42px; width: 60px; padding: 2px; cursor: pointer; }
@@ -141,16 +152,27 @@
   .slide-container[data-theme="light"] { background-image: radial-gradient(rgba(0,0,0,0.06) 2px, transparent 0); background-size: calc(var(--cw)*4) calc(var(--cw)*4); }
   .slide-container[data-theme="light"] .s-title { border-bottom: calc(var(--cw)*0.4) solid var(--c-primary); padding-bottom: calc(var(--cw)*1.5); display: inline-block; }
   
-  /* 3. Dark (Neon glow) */
-  .slide-container[data-theme="dark"] .s-title { text-shadow: 0 0 15px var(--c-primary), 0 0 30px var(--c-primary); }
+  /* 3. Dark (Neon glow & Pulse) */
+  .slide-container[data-theme="dark"] .s-title { color: #fff; text-shadow: 0 0 15px var(--c-primary), 0 0 30px var(--c-primary); }
+  .slide-container[data-theme="dark"] .slide.active .s-title strong { animation: glowPulse 2s infinite; display: inline-block; }
   .slide-container[data-theme="dark"] .s-content li::marker { color: var(--c-primary); text-shadow: 0 0 10px var(--c-primary); }
   
-  /* 4. Medical / Academic (Top header bar) */
-  .slide-container[data-theme="medical"] .slide:not(.is-section) { padding-top: calc(var(--cw) * 16); }
-  .slide-container[data-theme="medical"] .slide:not(.is-section) .s-title { position: absolute; top: 0; left: 0; right: 0; background: var(--c-primary); color: #fff; padding: calc(var(--cw) * 3) calc(var(--cw) * 8); font-size: calc(var(--cw) * 4); text-align: center; margin: 0; }
-  .slide-container[data-theme="medical"] .s-content li { list-style-type: square; }
-  .slide-container[data-theme="medical"] .slide:not(.is-section) .s-content { margin-top: calc(var(--cw) * 2); }
+  /* 4. Academic Variants */
+  .slide-container[data-theme^="academic-"] .s-content li { list-style-type: square; }
   
+  /* academic-blue (Current strictly format) */
+  .slide-container[data-theme="academic-blue"] .slide:not(.is-section) { padding-top: calc(var(--cw) * 16); }
+  .slide-container[data-theme="academic-blue"] .slide:not(.is-section) .s-title { position: absolute; top: 0; left: 0; right: 0; background: var(--c-primary); color: #fff; padding: calc(var(--cw) * 3) calc(var(--cw) * 8); font-size: calc(var(--cw) * 4); text-align: center; margin: 0; }
+  .slide-container[data-theme="academic-blue"] .slide:not(.is-section) .s-content { margin-top: calc(var(--cw) * 2); }
+  
+  /* academic-ivory (Thesis style) */
+  .slide-container[data-theme="academic-ivory"] .s-title { border-bottom: calc(var(--cw)*0.4) double var(--c-primary); padding-bottom: calc(var(--cw)*1.5); text-align: center; }
+  
+  /* academic-dark (Blackboard style) */
+  .slide-container[data-theme="academic-dark"] { background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 0); background-size: calc(var(--cw)*3) calc(var(--cw)*3); }
+  .slide-container[data-theme="academic-dark"] .s-title { border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom: calc(var(--cw)*1.5); color: #fff; }
+  .slide-container[data-theme="academic-dark"] strong { color: var(--c-primary); text-shadow: 0 0 8px rgba(250,204,21,0.4); } 
+
   /* 5. Manga / Comic (Heavy borders, dots) */
   .slide-container[data-theme="manga"] { background-image: radial-gradient(#aaa 2px, transparent 2px); background-size: calc(var(--cw)*1.5) calc(var(--cw)*1.5); }
   .slide-container[data-theme="manga"] .slide:not(.is-section) { background: #fff; inset: calc(var(--cw)*3); padding: calc(var(--cw)*5); border: calc(var(--cw)*0.8) solid #000; box-shadow: calc(var(--cw)*1.5) calc(var(--cw)*1.5) 0 #000; }
@@ -261,8 +283,12 @@
         <select id="theme-select" onchange="applyBuiltinTheme(this.value)">
           <option value="modern" selected>モダンフラット（標準）</option>
           <option value="light">クリーンホワイト</option>
-          <option value="dark">ナイトモード（黒背景）</option>
-          <option value="medical">🩺 学術・医学大会風（明朝体・白背景）</option>
+          <option value="dark">ナイトモード（黒背景・ネオン）</option>
+          <optgroup label="学術・大会風 (Academic)">
+            <option value="academic-blue">🩺 ベーシック（青ヘッダー・メイリオ）</option>
+            <option value="academic-ivory">📜 論文調（アイボリー・明朝体・二重線）</option>
+            <option value="academic-dark">🧑‍🏫 黒板調（ディープグリーン・プロ仕様）</option>
+          </optgroup>
           <option value="manga">🗯️ コミック・漫画風（手書き風・太枠）</option>
           <option value="elegant">✨ エレガント（セピア・高級感）</option>
         </select>
@@ -306,7 +332,9 @@ const DESIGN_THEMES = {
   modern:  { bgApp: '#f1f5f9', p: '#0ea5e9', t: '#334155', sb: '#ffffff', f: "'Inter', 'Noto Sans JP', sans-serif", border: 'none', radius: '8px', shadow: '0 20px 40px rgba(0,0,0,0.15)' },
   light:   { bgApp: '#ffffff', p: '#10b981', t: '#1e293b', sb: '#ffffff', f: "'Inter', 'Noto Sans JP', sans-serif", border: '1px solid #e2e8f0', radius: '4px', shadow: '0 4px 6px rgba(0,0,0,0.05)' },
   dark:    { bgApp: '#020617', p: '#38bdf8', t: '#f8fafc', sb: '#0f172a', f: "'Inter', 'Noto Sans JP', sans-serif", border: '1px solid #1e293b', radius: '12px', shadow: '0 20px 50px rgba(0,0,0,0.5)' },
-  medical: { bgApp: '#eef2f5', p: '#003366', t: '#1a1a1a', sb: '#ffffff', f: "'Meiryo', 'メイリオ', sans-serif", border: '1px solid #cbd5e1', radius: '0px', shadow: '0 5px 15px rgba(0,0,0,0.08)' },
+  'academic-blue': { bgApp: '#eef2f5', p: '#003366', t: '#1a1a1a', sb: '#ffffff', f: "'Meiryo', 'メイリオ', sans-serif", border: '1px solid #cbd5e1', radius: '0px', shadow: '0 5px 15px rgba(0,0,0,0.08)' },
+  'academic-ivory': { bgApp: '#e5e5e5', p: '#3b3b3b', t: '#2c2c2c', sb: '#fdfbf7', f: "'Noto Serif JP', serif", border: '1px solid #d1d1d1', radius: '2px', shadow: '0 5px 20px rgba(0,0,0,0.1)' },
+  'academic-dark': { bgApp: '#1a1a1a', p: '#facc15', t: '#f8fafc', sb: '#143628', f: "'Inter', 'Noto Sans JP', sans-serif", border: '10px solid #2d2620', radius: '4px', shadow: '0 10px 30px rgba(0,0,0,0.6)' },
   manga:   { bgApp: '#fcd34d', p: '#000000', t: '#000000', sb: '#ffffff', f: "'Yusei Magic', 'Comic Sans MS', sans-serif", border: '5px solid #000', radius: '0px', shadow: '10px 10px 0px rgba(0,0,0,1)' },
   elegant: { bgApp: '#292524', p: '#d4af37', t: '#fafaf9', sb: '#1c1917', f: "'Noto Serif JP', serif", border: '1px solid #78716c', radius: '2px', shadow: '0 20px 40px rgba(0,0,0,0.4)' }
 };
@@ -343,9 +371,8 @@ function applyCustomPalette() {
 }
 
 // ==========================================
-// 2. Parser Engine (with safe Markdown Bold)
+// 2. Parser Engine (Robust Title Parsing)
 // ==========================================
-// 安全なフォーマッター。入力が空や未定義でもエラーを出さない。
 function formatMarkdown(str) {
   if (typeof str !== 'string') return '';
   const safe = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -370,7 +397,8 @@ function parseText(text) {
       continue;
     }
 
-    const slideMatch = line.match(/^[-・*\s]*(?:スライド|Slide|ページ|Page)\s*\d*\s*[:：\- ]\s*(.+)/i) || line.match(/^#+\s+(.+)/);
+    // より堅牢な正規表現。全角数字や、スペースのみの区切りにも対応
+    const slideMatch = line.match(/^[-・*\s]*(?:スライド|Slide|ページ|Page)\s*[0-9０-９]*\s*[:：\-\s]+\s*(.+)/i) || line.match(/^#+\s+(.+)/);
     if (slideMatch) {
       pushSlide();
       currentSlide = { isSection: false, title: slideMatch[1].trim() || "無題", bullets: [], notes: '', inNotes: false };
@@ -459,11 +487,9 @@ function renderSlidesDOM() {
       html += `</ul>`;
     }
     
-    // Z-indexを30に設定し、クリックをブロックしない完璧なナビゲーション領域
     html += `<div class="nav-left" onclick="goPrev()"></div>`;
     html += `<div class="nav-right" onclick="goNext()"></div>`;
     
-    // ホバー用ノートゾーン（ポインターイベントなしなのでナビを阻害しない）
     if (slide.notes) {
       html += `
         <div class="hover-note-zone" id="hover-note-${idx}">
@@ -482,7 +508,6 @@ function updateView() {
     if (idx === currentIndex) el.classList.add('active');
     else el.classList.remove('active');
     
-    // ホバー表示の制御
     const hc = el.querySelector('.hover-note-content');
     if(hc) {
       if(noteMode === 'hover') hc.classList.add('active');
@@ -490,12 +515,10 @@ function updateView() {
     }
   });
 
-  // 下部固定ノートの制御
   document.getElementById('bottom-note-content').value = currentSlides[currentIndex] ? (currentSlides[currentIndex].notes || '') : '';
   document.getElementById('slide-counter-note').innerText = `Slide ${currentIndex + 1} / ${currentSlides.length}`;
   document.getElementById('speaker-note-bottom').classList.toggle('active', noteMode === 'fixed');
 
-  // アジェンダ制御
   document.querySelectorAll('.agenda-list li').forEach(li => {
     li.classList.toggle('current', li.dataset.index == currentIndex);
   });
@@ -577,8 +600,6 @@ Slide 5: 今後のアクションプラン
 
   document.getElementById('source-text').value = draft;
   closeAIModal();
-  
-  // 原稿作成後、自動でスライドを表示してプレビューする
   generate();
 }
 
@@ -628,7 +649,6 @@ async function downloadPDF() {
   pdf.save('SlideGenPro_Presentation.pdf');
 }
 
-// キーボードでスライド移動
 document.addEventListener('keydown', e => {
   if (document.getElementById('preview-panel').style.display === 'flex') {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goNext();
