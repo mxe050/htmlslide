@@ -64,10 +64,10 @@
   .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--cw) * 8); z-index: 20; display: flex; align-items: flex-end; }
   .hover-note-content { 
     width: 100%; background: rgba(0,0,0,0.85); color: #fff; padding: calc(var(--cw) * 2) calc(var(--cw) * 6);
-    font-size: calc(var(--cw) * 1.8); opacity: 0; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-    line-height: 1.6; box-sizing: border-box; pointer-events: none;
+    font-size: calc(var(--cw) * 1.8); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(10px);
+    line-height: 1.6; box-sizing: border-box; pointer-events: none; border-top-left-radius: 8px; border-top-right-radius: 8px;
   }
-  .slide:hover .hover-note-content { opacity: 1; pointer-events: auto; }
+  .hover-note-zone:hover .hover-note-content { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
   /* =========================================
      Sidebars & Modals
