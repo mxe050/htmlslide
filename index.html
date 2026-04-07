@@ -69,19 +69,20 @@
   .speaker-note-textarea:focus { outline: none; }
 
   /* 2. Hover Zone */
-  .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; height: calc(var(--cw) * 8); z-index: 20; display: flex; align-items: flex-end; }
+  .hover-note-zone { position: absolute; bottom: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: flex-end; pointer-events: none; }
   .hover-note-content { 
     width: 100%; background: rgba(0,0,0,0.85); color: #fff; padding: calc(var(--cw) * 2) calc(var(--cw) * 6);
-    font-size: calc(var(--cw) * 1.8); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(10px);
-    line-height: 1.6; box-sizing: border-box; pointer-events: none; border-top-left-radius: 8px; border-top-right-radius: 8px;
-    display: none;
+    font-size: calc(var(--cw) * 2.2); opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(10px);
+    line-height: 1.6; box-sizing: border-box; border-top-left-radius: 8px; border-top-right-radius: 8px;
+    display: none; pointer-events: none;
   }
   .hover-note-content.active { display: block; }
-  .hover-note-zone:hover .hover-note-content { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  /* スライド全体にホバーした時点で表示するよう変更（透明なイベントブロッカーの影響を排除） */
+  .slide:hover .hover-note-content { opacity: 1; transform: translateY(0); }
 
   /* Slide Core Styles */
-  .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; opacity: 0; transition: opacity 0.5s ease; font-family: var(--font-main); color: var(--c-text); box-sizing: border-box; }
-  .slide.active { display: flex; opacity: 1; }
+  .slide { position: absolute; inset: 0; padding: calc(var(--cw) * 8); display: none; flex-direction: column; justify-content: center; font-family: var(--font-main); color: var(--c-text); box-sizing: border-box; }
+  .slide.active { display: flex; }
   .s-title { font-size: calc(var(--cw) * 5); font-weight: 900; margin-bottom: calc(var(--cw) * 4); color: var(--c-primary); line-height: 1.35; letter-spacing: 0.02em; }
   .s-content { font-size: calc(var(--cw) * 2.8); line-height: 1.8; list-style-position: outside; margin-left: calc(var(--cw) * 3); padding: 0; }
   .s-content li { margin-bottom: calc(var(--cw) * 1.5); }
@@ -89,8 +90,8 @@
   .slide.is-section { align-items: center; text-align: center; background: var(--c-primary); justify-content: center; }
   .slide.is-section .s-title { color: #fff; font-size: calc(var(--cw) * 6.5); margin: 0; text-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
-  /* Interactive Navigation Overlays */
-  .nav-left, .nav-right { position: absolute; top: 0; bottom: 0; width: 40%; z-index: 10; cursor: pointer; transition: background 0.3s; }
+  /* Interactive Navigation Overlays (Z-index high enough to not be blocked) */
+  .nav-left, .nav-right { position: absolute; top: 0; bottom: 0; width: 40%; z-index: 30; cursor: pointer; transition: background 0.3s; }
   .nav-left { left: 0; }
   .nav-right { right: 0; }
   .nav-left:hover { background: linear-gradient(to right, rgba(0,0,0,0.03), transparent); }
@@ -255,7 +256,7 @@
     <!-- Draft Gen Section -->
     <div class="ai-card">
       <h4 style="margin-bottom:10px;">✍️ 2. 原稿を自動生成</h4>
-      <p style="margin-bottom:15px;">テーマを入力すると、構成と台本がすべて揃ったスライド一式を自動で作ります。</p>
+      <p style="margin-bottom:15px;">テーマを入力するだけで、構成から台本まですべて揃ったスライドを即座に作成・表示します。</p>
       <div class="ai-input-group">
         <input type="text" id="auto-draft-input" placeholder="例：新AIツールの導入促進について">
         <button onclick="generateAutoDraft()" class="ai-btn" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">⚡️ ドラフト作成</button>
@@ -302,16 +303,16 @@ function applyCustomPalette() {
   const bg = document.getElementById('val-bg').value;
   const txt = document.getElementById('val-txt').value;
   const pri = document.getElementById('val-pri').value;
-  // 背景はアプリ背景とスライド背景を同系統にする
   applyThemeTokens(bg, pri, txt, bg, null, '1px solid #ccc', '4px', '0 10px 20px rgba(0,0,0,0.1)');
   document.getElementById('theme-select').value = "";
 }
 
 // ==========================================
-// 2. Parser Engine (with Markdown Bold support)
+// 2. Parser Engine (with safe Markdown Bold)
 // ==========================================
-// HTMLエスケープ＆太字置換 (例: **太字** -> <strong>太字</strong>)
+// 安全なフォーマッター。入力が空や未定義でもエラーを出さない。
 function formatMarkdown(str) {
+  if (typeof str !== 'string') return '';
   const safe = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 }
@@ -327,32 +328,29 @@ function parseText(text) {
     line = line.trim();
     if (!line) continue;
 
-    // セクション
     const secMatch = line.match(/^---\s*(?:セクション)?\s*[:：\-]?\s*(.+?)\s*---$/);
     if (secMatch) {
       pushSlide();
-      currentSlide = { isSection: true, title: secMatch[1], bullets: [], notes: '' };
+      currentSlide = { isSection: true, title: secMatch[1] || "", bullets: [], notes: '' };
       continue;
     }
 
-    // 新規スライド
     const slideMatch = line.match(/^[-・*\s]*(?:スライド|Slide|ページ|Page)\s*\d*\s*[:：\- ]\s*(.+)/i) || line.match(/^#+\s+(.+)/);
     if (slideMatch) {
       pushSlide();
-      currentSlide = { isSection: false, title: slideMatch[1].trim(), bullets: [], notes: '', inNotes: false };
+      currentSlide = { isSection: false, title: slideMatch[1].trim() || "無題", bullets: [], notes: '', inNotes: false };
       continue;
     }
 
-    // 台本領域
     const noteMatch = line.match(/^(?:台本|ノート|note|メモ)\s*[:：]\s*(.*)/i);
     if (noteMatch && currentSlide) {
-      currentSlide.notes = noteMatch[1].trim();
+      currentSlide.notes = noteMatch[1].trim() || "";
       currentSlide.inNotes = true;
       continue;
     }
 
     if (!currentSlide) {
-      currentSlide = { isSection: false, title: line, bullets: [], notes: '', inNotes: false };
+      currentSlide = { isSection: false, title: line || "無題", bullets: [], notes: '', inNotes: false };
       continue;
     }
 
@@ -360,7 +358,7 @@ function parseText(text) {
       currentSlide.notes += (currentSlide.notes ? '\n' : '') + line;
     } else {
       const cleanLine = line.replace(/^[-・*]\s*/, '');
-      currentSlide.bullets.push(cleanLine);
+      currentSlide.bullets.push(cleanLine || " ");
     }
   }
   pushSlide();
@@ -372,7 +370,7 @@ function parseText(text) {
 // ==========================================
 let currentSlides = [];
 let currentIndex = 0;
-let noteMode = 'fixed'; // 'fixed' (bottom panel) OR 'hover' (slide hover content)
+let noteMode = 'fixed'; 
 let resizeObserver = null;
 
 function generate() {
@@ -392,11 +390,9 @@ function generate() {
   renderSlidesDOM();
   buildAgenda();
 
-  // 文字消えバグ防止：サイズ確実計算
   const container = document.getElementById('slide-container');
   if(resizeObserver) resizeObserver.disconnect();
   
-  // 初期値を即時計算
   const setCW = () => {
     const w = container.getBoundingClientRect().width;
     if(w > 0) container.style.setProperty('--cw', (w / 100) + 'px');
@@ -427,10 +423,12 @@ function renderSlidesDOM() {
       slide.bullets.forEach(b => { html += `<li>${formatMarkdown(b)}</li>`; });
       html += `</ul>`;
     }
+    
+    // Z-indexを30に設定し、クリックをブロックしない完璧なナビゲーション領域
     html += `<div class="nav-left" onclick="goPrev()"></div>`;
     html += `<div class="nav-right" onclick="goNext()"></div>`;
     
-    // ホバー用ノートゾーン (固定の時は非表示になる仕組み)
+    // ホバー用ノートゾーン（ポインターイベントなしなのでナビを阻害しない）
     if (slide.notes) {
       html += `
         <div class="hover-note-zone" id="hover-note-${idx}">
@@ -458,7 +456,7 @@ function updateView() {
   });
 
   // 下部固定ノートの制御
-  document.getElementById('bottom-note-content').value = currentSlides[currentIndex].notes || '';
+  document.getElementById('bottom-note-content').value = currentSlides[currentIndex] ? (currentSlides[currentIndex].notes || '') : '';
   document.getElementById('slide-counter-note').innerText = `Slide ${currentIndex + 1} / ${currentSlides.length}`;
   document.getElementById('speaker-note-bottom').classList.toggle('active', noteMode === 'fixed');
 
@@ -472,12 +470,10 @@ function toggleNoteMode() {
   noteMode = noteMode === 'fixed' ? 'hover' : 'fixed';
   document.getElementById('btn-note-toggle').innerText = noteMode === 'fixed' ? '🗣️ 台本：固定表示' : '💭 台本：マウスホバー表示';
   updateView();
-  // リサイズ強制トリガー
   setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
 }
 
 function toggleFullScreen() {
-  // .preview-panel に対してフルスクリーンをかけるためメニューは消える
   const elem = document.getElementById('preview-panel');
   if (!document.fullscreenElement) {
     if (elem.requestFullscreen) elem.requestFullscreen();
@@ -546,7 +542,9 @@ Slide 5: 今後のアクションプラン
 
   document.getElementById('source-text').value = draft;
   closeAIModal();
-  toInput();
+  
+  // 原稿作成後、自動でスライドを表示してプレビューする
+  generate();
 }
 
 function openAIModal() { document.getElementById('ai-modal').classList.add('show'); }
@@ -570,7 +568,6 @@ async function downloadPDF() {
   const W = 1920, H = 1080;
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: [W, H] });
 
-  // 強制的にSlideContainerのaspect-ratioを展開させる
   const container = document.getElementById('slide-container');
   const orgW = container.style.width; const orgH = container.style.height;
   container.style.width = '1920px'; container.style.height = '1080px';
@@ -589,7 +586,6 @@ async function downloadPDF() {
     el.querySelectorAll('.nav-left, .nav-right').forEach(n => n.style.display = 'block');
   }
 
-  // 元に戻す
   container.style.width = orgW; container.style.height = orgH;
   noteMode = originalMode; currentIndex = 0; updateView();
   setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
@@ -597,6 +593,7 @@ async function downloadPDF() {
   pdf.save('SlideGenPro_Presentation.pdf');
 }
 
+// キーボードでスライド移動
 document.addEventListener('keydown', e => {
   if (document.getElementById('preview-panel').style.display === 'flex') {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goNext();
